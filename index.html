@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pangi — Estate Ledger & Tenant Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --paper:#F4F0E6; --paper2:#ECE7D9; --paper3:#E4DECD;
+  --ink:#1C1A15; --ink2:#5B564B; --ink3:#98917F;
+  --line:#DAD3C0; --line2:#C6BEA8;
+  --green:#2F6B45; --green-d:#1E4A2F;
+  --amber:#B4761B; --red:#AC3527; --blue:#3D637F; --gray:#8E8878;
+  --serif:'Fraunces',Georgia,serif; --sans:'Archivo',sans-serif; --mono:'Spline Sans Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:14.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink);background:var(--paper);border:1px solid var(--line2);border-radius:2px;padding:9px 11px;width:100%;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--ink)}
+textarea{resize:vertical;min-height:80px}
+label{display:block;font:600 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);margin:12px 0 5px}
+::placeholder{color:var(--ink3)}
+h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.15}
+a{color:inherit}
+i[data-lucide]{width:16px;height:16px;flex:none}
+
+/* ============ BUTTONS ============ */
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:var(--paper);border:1px solid var(--ink);border-radius:2px;padding:9px 16px;font:600 13px var(--sans);transition:.15s}
+.btn:hover{background:#000}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{background:var(--paper2)}
+.btn.small{padding:5px 10px;font-size:12px}
+.btn.wide{width:100%;justify-content:center}
+.btn.danger{background:var(--red);border-color:var(--red)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ============ STAMPS & DOTS ============ */
+.stamp{display:inline-flex;align-items:center;font:600 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;padding:4px 8px 3px;border:1.5px solid currentColor;border-radius:2px;transform:rotate(-1.4deg);white-space:nowrap}
+.st-ok{color:var(--green-d)} .st-due{color:var(--amber)} .st-overdue{color:var(--red)}
+.st-reserved{color:var(--blue)} .st-vacant{color:var(--gray)} .st-open{color:var(--amber)} .st-answered{color:var(--green-d)}
+.st-ink{color:var(--ink)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--st,var(--gray));flex:none;box-shadow:0 0 0 1.5px var(--paper) inset}
+.lg-item{display:inline-flex;align-items:center;gap:7px;font:500 11.5px var(--mono);letter-spacing:.06em;color:var(--ink2)}
+.lg-ok{--st:var(--green)} .lg-due{--st:var(--amber)} .lg-overdue{--st:var(--red)} .lg-reserved{--st:var(--blue)} .lg-vacant{--st:var(--gray)}
+
+/* ============ SHELL ============ */
+#shell{display:grid;grid-template-columns:230px 1fr;height:100vh}
+aside{background:var(--ink);color:var(--paper);display:flex;flex-direction:column;overflow-y:auto}
+.wordmark{display:flex;align-items:center;gap:10px;padding:22px 20px 18px;border-bottom:1px solid #33302A}
+.wordmark svg{width:26px;height:26px;flex:none}
+.wordmark b{font:600 20px var(--serif);letter-spacing:.01em}
+.wordmark small{display:block;font:500 9px var(--mono);letter-spacing:.22em;text-transform:uppercase;color:#8f897b}
+nav{padding:14px 0;flex:1}
+.nitem{display:flex;align-items:center;gap:11px;width:100%;padding:10px 20px;background:none;border:none;color:#B9B3A4;font:500 13.5px var(--sans);letter-spacing:.01em;text-align:left;border-left:2px solid transparent;transition:.15s}
+.nitem:hover{color:var(--paper)}
+.nitem.on{color:var(--paper);border-left-color:var(--paper);background:#26231D}
+.nitem .nbadge{margin-left:auto;font:600 10px var(--mono);background:var(--red);color:#fff;border-radius:9px;padding:1px 6px}
+.aside-foot{padding:16px 20px;border-top:1px solid #33302A;font:500 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#7d7768}
+#main{display:flex;flex-direction:column;min-width:0}
+#topbar{display:flex;align-items:center;gap:14px;padding:0 28px;height:62px;border-bottom:1px solid var(--line2);background:var(--paper)}
+#ptitle{font:600 21px var(--serif)}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.top-date{font:500 11.5px var(--mono);letter-spacing:.06em;color:var(--ink2)}
+.bell-wrap{position:relative}
+.bell-btn{position:relative;display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:none;border:1px solid var(--line2);border-radius:2px;transition:.15s}
+.bell-btn:hover{border-color:var(--ink)}
+.bell-n{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font:600 9.5px var(--mono);border-radius:9px;padding:1px 5px}
+.bell-drop{position:absolute;right:0;top:44px;width:340px;background:var(--paper);border:1px solid var(--ink);border-radius:3px;box-shadow:0 18px 40px -14px rgba(28,26,21,.4);z-index:50;display:none}
+.bell-drop.on{display:block}
+.bell-drop .bh{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line)}
+.bell-drop .bh b{font:600 11px var(--mono);letter-spacing:.16em;text-transform:uppercase}
+.bh button{background:none;border:none;font:600 11px var(--sans);text-decoration:underline;color:var(--ink2)}
+.uchip{display:flex;align-items:center;gap:9px}
+.uchip .un{font:600 13px var(--sans);line-height:1.15}
+.uchip .un small{display:block;font:500 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.ava{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--paper);font:600 12px var(--mono);letter-spacing:.05em;flex:none}
+#view{flex:1;overflow-y:auto;padding:26px 28px 60px}
+.view{animation:vin .3s ease}
+@keyframes vin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ============ PAGE FURNITURE ============ */
+.phead{display:flex;align-items:flex-end;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.phead h1{font-size:30px}
+.phead .sub{font:500 12px var(--mono);letter-spacing:.08em;color:var(--ink2);padding-bottom:6px}
+.phead .acts{margin-left:auto;display:flex;gap:8px}
+.panel{background:var(--paper);border:1px solid var(--line2);border-radius:3px;margin-bottom:18px}
+.panel-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);font:600 10.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink2)}
+.panel-b{padding:16px}
+.strip{display:flex;border:1px solid var(--ink);border-radius:3px;background:var(--paper);margin-bottom:20px;flex-wrap:wrap}
+.strip .cell{flex:1;min-width:150px;padding:16px 18px;border-right:1px solid var(--line)}
+.strip .cell:last-child{border-right:none}
+.strip .lbl{font:600 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);margin-bottom:6px}
+.strip .fig{font:600 26px var(--mono);letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.strip .fig small{font-size:14px;color:var(--ink2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.grid2>*{margin-bottom:0}
+.grid2 .panel{margin-bottom:0}
+
+/* ledger table */
+.ledger{width:100%;border-collapse:collapse}
+.ledger th{font:600 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);text-align:left;padding:9px 14px;border-bottom:1px solid var(--line2)}
+.ledger td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ledger tr:last-child td{border-bottom:none}
+.ledger tbody tr{transition:background .12s}
+.ledger tbody tr.click{cursor:pointer}
+.ledger tbody tr.click:hover{background:var(--paper2)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;font-weight:500}
+th.num{text-align:right}
+.dim{color:var(--ink3)} .small{font-size:12px} .mono{font-family:var(--mono)}
+.rowlink{background:none;border:none;font:600 12px var(--sans);text-decoration:underline;text-underline-offset:2px;color:var(--ink2);padding:0}
+.rowlink:hover{color:var(--ink)}
+
+/* ============ PLAN ============ */
+.plan-frame{position:relative;border:1.5px solid var(--ink);border-radius:3px;padding:18px 18px 14px;background-image:repeating-linear-gradient(0deg,rgba(28,26,21,.045) 0 1px,transparent 1px 22px),repeating-linear-gradient(90deg,rgba(28,26,21,.045) 0 1px,transparent 1px 22px)}
+.plan-frame .plan-name{position:absolute;top:10px;left:14px;font:600 10px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--ink2)}
+.plan-frame .plan-n{position:absolute;top:8px;right:12px;display:flex;align-items:center;gap:3px;font:600 10px var(--mono);letter-spacing:.1em;color:var(--ink2)}
+.plan-grid{display:flex;flex-direction:column;gap:0;max-width:860px;margin:8px auto 0}
+.p-row{display:grid;grid-template-columns:repeat(var(--cols,3),1fr);gap:10px}
+.p-corridor{display:flex;align-items:center;justify-content:space-between;border-top:1.5px dashed var(--line2);border-bottom:1.5px dashed var(--line2);margin:10px 0;padding:5px 6px;font:600 9px var(--mono);letter-spacing:.3em;text-transform:uppercase;color:var(--ink3)}
+.room{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:11px 12px 9px;min-height:96px;border-radius:3px;border:1px solid color-mix(in srgb,var(--st) 45%,var(--line2));border-left:4px solid var(--st);background:color-mix(in srgb,var(--st) 9%,var(--paper));color:var(--ink);transition:transform .16s,box-shadow .16s}
+.room:hover{transform:translateY(-3px);box-shadow:0 10px 20px -12px rgba(28,26,21,.45)}
+.room.st-ok{--st:var(--green)} .room.st-due{--st:var(--amber)} .room.st-overdue{--st:var(--red)}
+.room.st-reserved{--st:var(--blue);background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--blue) 7%,var(--paper)) 0 9px,color-mix(in srgb,var(--blue) 13%,var(--paper)) 9px 18px)}
+.room.st-vacant{--st:var(--gray);background:var(--paper2);border-style:dashed}
+.room .r-top{display:flex;align-items:center;gap:7px;width:100%}
+.room .r-no{font:600 12px var(--mono);letter-spacing:.1em}
+.room .r-who{font:600 12.5px var(--sans);color:var(--ink2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.room.st-vacant .r-who{font-style:italic;color:var(--ink3)}
+.room .r-who em{font:600 8.5px var(--mono);letter-spacing:.16em;color:var(--ink);background:var(--ink);color:var(--paper);padding:1px 5px;border-radius:2px;font-style:normal;margin-left:5px;vertical-align:1px}
+.room .r-rent{font:500 11px var(--mono);color:var(--ink2);font-variant-numeric:tabular-nums}
+.room .r-st{margin-top:auto;font:600 9px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--st)}
+.room.you{outline:2px solid var(--ink);outline-offset:2px}
+.door{position:absolute;width:16px;height:16px;border:1px solid var(--line2);pointer-events:none}
+.door.d-s{bottom:3px;left:7px;border-radius:0 0 0 100%;border-top-color:transparent;border-right-color:transparent}
+.door.d-n{top:3px;left:7px;border-radius:100% 0 0 0;border-bottom-color:transparent;border-right-color:transparent}
+
+/* ============ DRAWER / MODAL / TOAST ============ */
+.scrim{position:fixed;inset:0;background:rgba(28,26,21,.45);opacity:0;transition:opacity .3s;z-index:55}
+.scrim.on{opacity:1}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(540px,100vw);background:var(--paper);border-left:1.5px solid var(--ink);z-index:60;transform:translateX(100%);transition:transform .32s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.drawer-h{display:flex;align-items:flex-start;gap:12px;padding:20px 22px 16px;border-bottom:1px solid var(--line2)}
+.drawer-h h2{font-size:23px}
+.drawer-h .sub{font:500 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);margin-top:3px}
+.drawer-x{margin-left:auto;background:none;border:1px solid var(--line2);border-radius:2px;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+.drawer-x:hover{border-color:var(--ink)}
+.drawer-b{flex:1;overflow-y:auto;padding:18px 22px 40px}
+.dsec{margin-bottom:18px;border:1px solid var(--line2);border-radius:3px}
+.dsec .dh{padding:10px 14px;border-bottom:1px solid var(--line);font:600 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);display:flex;justify-content:space-between;align-items:center}
+.dsec .db{padding:6px 14px 10px}
+.kv{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px solid var(--line)}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--ink2);font-size:13px}
+.kv .v{font-weight:600;text-align:right}
+.kv .v.mono{font-variant-numeric:tabular-nums}
+.modal-overlay{position:fixed;inset:0;background:rgba(28,26,21,.5);z-index:70;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .25s}
+.modal-overlay.on{opacity:1}
+.modal{background:var(--paper);border:1.5px solid var(--ink);border-radius:3px;width:min(480px,100%);max-height:88vh;overflow-y:auto;transform:translateY(14px) scale(.98);transition:transform .25s}
+.modal-overlay.on .modal{transform:none}
+.modal-h{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line2)}
+.modal-h h3{font-size:19px}
+.modal-b{padding:6px 20px 20px}
+.modal-f{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--line)}
+.modal-f .btn{margin-left:8px}
+#toast-root{position:fixed;bottom:22px;right:22px;z-index:90;display:flex;flex-direction:column;gap:8px}
+.toast{display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--paper);padding:11px 16px;border-radius:3px;font:500 13px var(--sans);max-width:360px;opacity:0;transform:translateY(10px);transition:.25s;border-left:3px solid var(--gray)}
+.toast.on{opacity:1;transform:none}
+.toast.t-ok{border-left-color:var(--green)} .toast.t-err{border-left-color:var(--red)} .toast.t-warn{border-left-color:var(--amber)}
+
+/* ============ NOTIFICATIONS ============ */
+.note-it{display:flex;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s}
+.note-it:hover{background:var(--paper2)}
+.note-it:last-child{border-bottom:none}
+.note-it.unread{background:color-mix(in srgb,var(--paper3) 60%,var(--paper))}
+.note-it .nic{width:32px;height:32px;border:1px solid var(--line2);border-radius:2px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink2)}
+.note-it b{font-size:13.5px;display:block}
+.note-it p{font-size:12.5px;color:var(--ink2);margin-top:1px}
+.note-it .nt{margin-left:auto;font:500 10px var(--mono);color:var(--ink3);white-space:nowrap}
+.unread-dot{width:7px;height:7px;background:var(--red);border-radius:50%;flex:none;margin-top:6px}
+
+/* ============ LOGIN ============ */
+.login{display:grid;grid-template-columns:1.25fr 1fr;min-height:100vh}
+.login-left{padding:52px 60px;display:flex;flex-direction:column;border-right:1px solid var(--line2)}
+.login-left h1{font-size:clamp(38px,4.5vw,58px);margin:26px 0 14px;letter-spacing:-.01em}
+.login-left .lede{max-width:46ch;color:var(--ink2);font-size:15.5px;margin-bottom:34px}
+.login-plan{margin-top:auto;max-width:640px}
+.plan-cap{font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin-top:8px}
+.login-right{display:flex;align-items:center;justify-content:center;padding:40px;background:var(--paper2)}
+.login-card{width:min(380px,100%);border:1.5px solid var(--ink);border-radius:3px;background:var(--paper);padding:28px}
+.login-card h2{font-size:25px;margin-bottom:4px}
+.login-card .lc-sub{color:var(--ink2);font-size:13px;margin-bottom:8px}
+.form-err{color:var(--red);font-size:12.5px;min-height:18px;margin-top:8px;font-weight:600}
+.demo-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.chip{border:1px solid var(--line2);background:var(--paper2);border-radius:14px;padding:5px 12px;font:500 12px var(--sans);transition:.15s}
+.chip:hover{border-color:var(--ink)}
+.demo-note{margin-top:16px;font-size:11.5px;color:var(--ink3)}
+.demo-note code{font-family:var(--mono);color:var(--ink2)}
+.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* ============ MISC ============ */
+.mstrip{display:grid;grid-template-columns:repeat(auto-fit,minmax(26px,1fr));gap:3px}
+.ms-c{font:500 10.5px var(--mono);text-align:center;padding:6px 0;border:1px solid transparent;color:var(--ink2)}
+.ms-c.today{border-color:var(--ink);color:var(--ink);font-weight:600}
+.ms-c.due{background:var(--amber);color:#fff;border-radius:2px}
+.ms-c.miss{background:var(--red);color:#fff;border-radius:2px}
+.gal-main{width:100%;height:280px;object-fit:cover;display:block;border-bottom:1px solid var(--line2)}
+.gal-thumbs{display:flex;gap:8px;padding:10px}
+.gal-thumbs img{width:86px;height:60px;object-fit:cover;cursor:pointer;border:1px solid var(--line2);border-radius:2px;opacity:.75;transition:.15s}
+.gal-thumbs img.on,.gal-thumbs img:hover{opacity:1;border-color:var(--ink)}
+.lease-bar{height:6px;background:var(--paper3);border-radius:3px;overflow:hidden;margin:8px 0 4px}
+.lease-bar i{display:block;height:100%;background:var(--green)}
+.timeline{list-style:none}
+.timeline li{position:relative;padding:0 0 14px 20px;border-left:1px solid var(--line2);margin-left:6px}
+.timeline li:last-child{padding-bottom:0;border-left-color:transparent}
+.timeline li::before{content:'';position:absolute;left:-4.5px;top:4px;width:8px;height:8px;border-radius:50%;background:var(--ink)}
+.tl-date{font:500 10px var(--mono);letter-spacing:.08em;color:var(--ink3)}
+.bars{display:flex;align-items:flex-end;gap:10px;height:120px;padding-top:8px}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.bar i{display:block;width:100%;max-width:38px;background:var(--green-d);border-radius:2px 2px 0 0;min-height:2px;transition:height .4s ease}
+.bar .bl{font:500 10px var(--mono);color:var(--ink3)}
+.bar .bv{font:600 10.5px var(--mono)}
+.amen{display:flex;flex-wrap:wrap;gap:8px}
+.amen span{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:2px;padding:6px 10px;font-size:12.5px;color:var(--ink2)}
+.rules{counter-reset:r;list-style:none}
+.rules li{counter-increment:r;display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.rules li:last-child{border-bottom:none}
+.rules li::before{content:counter(r,decimal-leading-zero);font:600 11px var(--mono);color:var(--ink3);padding-top:2px}
+.msg{max-width:78%;padding:10px 14px;border-radius:3px;font-size:13.5px;margin-bottom:10px}
+.msg.tenant{background:var(--paper2);border:1px solid var(--line2)}
+.msg.admin{background:var(--ink);color:var(--paper);margin-left:auto}
+.msg .mt{font:500 9.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-bottom:3px}
+.ph-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.ph-thumbs img{width:96px;height:72px;object-fit:cover;border:1px solid var(--line2);border-radius:2px}
+.ph-thumb{position:relative}
+.ph-thumb button{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--paper);border:none;display:flex;align-items:center;justify-content:center}
+.empty{padding:28px 16px;text-align:center;color:var(--ink3);font-size:13px}
+.tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.tab{border:1px solid var(--line2);background:var(--paper);border-radius:2px;padding:8px 15px;font:600 13px var(--sans);color:var(--ink2);transition:.15s}
+.tab:hover{border-color:var(--ink);color:var(--ink)}
+.tab.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.divider-label{font:600 10px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink3);margin:22px 0 10px;display:flex;align-items:center;gap:10px}
+.divider-label::after{content:'';flex:1;height:1px;background:var(--line2)}
+#print-area{display:none}
+.check-line{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--ink2)}
+.check-line input{width:auto}
+@media print{ body>#app,#drawer-root,#modal-root,#toast-root{display:none!important} #print-area{display:block!important} }
+@media (max-width:1100px){ #shell{grid-template-columns:200px 1fr} .grid2{grid-template-columns:1fr} .login{grid-template-columns:1fr} .login-left{border-right:none;border-bottom:1px solid var(--line2)} }
+@media (max-width:840px){
+  #shell{grid-template-columns:1fr;grid-template-rows:auto 1fr;height:auto;min-height:100vh}
+  aside{flex-direction:row;align-items:center;overflow-x:auto}
+  nav{display:flex;padding:0} .nitem{white-space:nowrap;border-left:none;border-bottom:2px solid transparent;padding:14px 12px}
+  .nitem.on{border-left:none;border-bottom-color:var(--paper);background:none}
+  .wordmark,.aside-foot{border:none;padding:12px 14px} .wordmark small{display:none}
+  .p-row{grid-template-columns:1fr!important}
+  .strip .cell{min-width:46%}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="drawer-root"></div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+<div id="print-area"></div>
+
+<script>
+/* =====================================================================
+   PANGI — estate ledger & tenant portal. All data lives in localStorage.
+   Tenant views read exclusively through the session tenant id (myX() helpers),
+   which is the single access layer that would be auth-enforced server-side.
+===================================================================== */
+
+/* ---------- utils ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=p=>p+Math.random().toString(36).slice(2,8);
+const pad=(n,l)=>String(n).padStart(l,'0');
+const dayISO=d=>{const x=new Date(d);return `${x.getFullYear()}-${pad(x.getMonth()+1,2)}-${pad(x.getDate(),2)}`};
+const nowISO=()=>new Date().toISOString();
+const addDaysISO=(iso,n)=>dayISO(new Date(new Date(iso+'T00:00:00').getTime()+n*86400000));
+const diffDays=(a,b)=>Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);
+const todayISO=()=>dayISO(new Date());
+const fmtMoney=n=>'KSh '+Math.round(n||0).toLocaleString('en-KE');
+const fmtDate=iso=>iso?new Date(iso+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
+const fmtDT=iso=>new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' · '+new Date(iso).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+function ago(iso){const s=(Date.now()-new Date(iso))/1e3;if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago'}
+const curPeriod=()=>todayISO().slice(0,7);
+function periodLabel(k){const [y,m]=k.split('-');return new Date(y,m-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'})}
+const initials=n=>n.split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+const refreshIcons=()=>{try{lucide.createIcons()}catch(e){}};
+
+/* ---------- database ---------- */
+const DBKEY='pangi_db_v1';
+let db;
+function saveDB(){try{localStorage.setItem(DBKEY,JSON.stringify(db))}catch(e){toast('Storage full — photo too large','err')}}
+function loadDB(){const raw=localStorage.getItem(DBKEY);if(raw){try{db=JSON.parse(raw);return}catch(e){}}db=seedDB();saveDB()}
+
+function seedDB(){
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth(),day=now.getDate();
+  const cur=curPeriod();
+  const pk=i=>dayISO(new Date(y,m-i,1)).slice(0,7);           // period key, i months ago
+  const pISO=(i,d)=>{const t=new Date(y,m,day),c=new Date(y,m-i,Math.min(d,day));return dayISO(c>t?t:c)};
+  const monthsAgoISO=i=>dayISO(new Date(y,m-i,1));
+  const T=(id,name,email,phone,unitId,moveIn,dueDay,balance,credits,extra)=>Object.assign({
+    id,name,email,phone,unitId,pass:'demo123',dueDay,moveIn,balance,credits,active:true,
+    billed:[cur,pk(1),pk(2)],dueDate:addDaysISO(todayISO(),30),leaseMonths:24},extra||{});
+  const P=(tid,unitId,amount,method,status,period,dateISO)=>({
+    id:uid('pay'),tenantId:tid,unitId,amount,method,status,period,date:dateISO+'T09:'+pad(10+(amount%40),2)+':00',
+    ref:(status==='paid'?'QGH':'ERR')+Math.random().toString(36).slice(2,9).toUpperCase(),
+    receiptNo:status==='paid'?'RCP-'+pad(receipts++,4):null});
+  let receipts=1001;
+  const props=[
+    {id:'p1',name:'Green Valley Apartments',location:'Ngong Road, Nairobi',cols:3,
+     desc:'A quiet six-unit walk-up block set back from Ngong Road, finished with handmade tiles and a shared courtyard. Borehole water and solar corridor lighting keep running costs low.',
+     amenities:['Borehole water','Elevated backup tank','Solar corridor lighting','CCTV surveillance','Reserved parking','Caretaker on site','Fiber-ready internet','Weekly garbage collection'],
+     rules:['Rent is due by the 5th of every month','Quiet hours are 10:00 pm – 6:00 am','No subletting without written consent','Garbage out by 7:00 am on Mondays and Thursdays','Overnight guests to be registered with the caretaker','Report maintenance issues within 24 hours'],
+     photos:[1,2,3].map(i=>`https://picsum.photos/seed/pangi-gv-${i}/900/620.jpg`)},
+    {id:'p2',name:'Riverside Courts',location:'Kiambu Road, Kiambu',cols:2,
+     desc:'Four spacious courts in a gated compound off Kiambu Road with generous light, a riverside garden and basement parking.',
+     amenities:['Borehole water','Backup generator','Gated security','Riverside garden','Basement parking','Fiber internet','Weekly garbage collection'],
+     rules:['Rent is due by the 5th of every month','Quiet hours are 10:00 pm – 6:00 am','No subletting without written consent','Visitors sign in at the gate','No unauthorized renovations'],
+     photos:[1,2].map(i=>`https://picsum.photos/seed/pangi-rc-${i}/900/620.jpg`)}
+  ];
+  const units=[
+    {id:'u1',propertyId:'p1',label:'Room 1',status:'occupied',tenantId:'t1',rent:15000,deposit:30000,size:'26 m²',photo:'https://picsum.photos/seed/pangi-r1/900/620.jpg',desc:'Self-contained bedsitter with a private kitchen and shower, tiled throughout, large window facing the courtyard.'},
+    {id:'u2',propertyId:'p1',label:'Room 2',status:'occupied',tenantId:'t2',rent:15000,deposit:30000,size:'26 m²',photo:'https://picsum.photos/seed/pangi-r2/900/620.jpg',desc:'Self-contained bedsitter overlooking the courtyard, fresh repaint, fitted wardrobe.'},
+    {id:'u3',propertyId:'p1',label:'Room 3',status:'vacant',tenantId:null,rent:15000,deposit:30000,size:'26 m²',photo:'https://picsum.photos/seed/pangi-r3/900/620.jpg',desc:'Self-contained bedsitter, newly tiled, ready for move-in. Shares the courtyard-facing wing.'},
+    {id:'u4',propertyId:'p1',label:'Room 4',status:'occupied',tenantId:'t3',rent:15000,deposit:30000,size:'28 m²',photo:'https://picsum.photos/seed/pangi-r4/900/620.jpg',desc:'Larger corner bedsitter with two windows, private kitchenette and shower.'},
+    {id:'u5',propertyId:'p1',label:'Room 5',status:'reserved',tenantId:null,rent:15000,deposit:30000,size:'26 m²',photo:'https://picsum.photos/seed/pangi-r5/900/620.jpg',desc:'Self-contained bedsitter currently held for an approved applicant pending move-in.',reservedFor:'Grace A. — application approved'},
+    {id:'u6',propertyId:'p1',label:'Room 6',status:'occupied',tenantId:'t4',rent:14500,deposit:29000,size:'25 m²',photo:'https://picsum.photos/seed/pangi-r6/900/620.jpg',desc:'Ground-floor bedsitter steps from the gate, private kitchen and shower.'},
+    {id:'u2a',propertyId:'p2',label:'Unit A',status:'occupied',tenantId:'t5',rent:22000,deposit:44000,size:'54 m²',photo:'https://picsum.photos/seed/pangi-ua/900/620.jpg',desc:'One-bedroom court with open kitchen, balcony to the garden and basement parking bay.'},
+    {id:'u2b',propertyId:'p2',label:'Unit B',status:'occupied',tenantId:'t6',rent:22000,deposit:44000,size:'54 m²',photo:'https://picsum.photos/seed/pangi-ub/900/620.jpg',desc:'One-bedroom court, morning light, steps from the riverside garden.'},
+    {id:'u2c',propertyId:'p2',label:'Unit C',status:'vacant',tenantId:null,rent:24000,deposit:48000,size:'62 m²',photo:'https://picsum.photos/seed/pangi-uc/900/620.jpg',desc:'Two-bedroom court, newly finished, available for immediate move-in.'},
+    {id:'u2d',propertyId:'p2',label:'Unit D',status:'reserved',tenantId:null,rent:24000,deposit:48000,size:'62 m²',photo:'https://picsum.photos/seed/pangi-ud/900/620.jpg',desc:'Two-bedroom court held pending signed lease.',reservedFor:'Corporate let — pending lease signing'}
+  ];
+  const tenants=[
+    T('t1','John Doe','john@example.com','+254 712 345 678','u1',monthsAgoISO(14),5,0,0,{leaseStart:monthsAgoISO(14)}),
+    T('t2','Jane Doe','jane@example.com','+254 733 210 456','u2',monthsAgoISO(12),5,0,1200,{leaseStart:monthsAgoISO(12)}),
+    T('t3','Michael Doe','michael@example.com','+254 705 889 001','u4',monthsAgoISO(18),5,30000,0,{leaseStart:monthsAgoISO(18),dueDate:dayISO(new Date(y,m-1,5))}),
+    T('t4','Amina Wanjiru','amina@example.com','+254 799 445 220','u6',monthsAgoISO(2),5,14500,0,{leaseStart:monthsAgoISO(2),dueDate:addDaysISO(todayISO(),2)}),
+    T('t5','David Kimani','david@example.com','+254 722 610 934','u2a',monthsAgoISO(9),5,0,0,{leaseStart:monthsAgoISO(9)}),
+    T('t6','Faith Njeri','faith@example.com','+254 720 118 455','u2b',monthsAgoISO(7),5,0,0,{leaseStart:monthsAgoISO(7)})
+  ];
+  tenants.forEach(t=>{const d=new Date(t.dueDate+'T00:00:00');t.dueDate=dayISO(new Date(d.getFullYear(),d.getMonth()+1,t.dueDay))});
+  const payments=[
+    P('t1','u1',15000,'M-PESA','paid',cur,pISO(0,2)),
+    P('t1','u1',15000,'M-PESA','paid',pk(1),pISO(1,4)),
+    P('t1','u1',15000,'M-PESA','paid',pk(2),pISO(2,5)),
+    P('t2','u2',15000,'Bank transfer','paid',cur,pISO(0,1)),
+    P('t2','u2',15000,'Bank transfer','paid',pk(1),pISO(1,3)),
+    P('t3','u4',15000,'M-PESA','paid',pk(2),pISO(2,28)),
+    P('t3','u4',15000,'M-PESA','failed',pk(1),pISO(1,6)),
+    P('t4','u6',14500,'M-PESA','paid',pk(1),pISO(1,3)),
+    P('t5','u2a',22000,'M-PESA','paid',cur,pISO(0,1)),
+    P('t5','u2a',22000,'M-PESA','paid',pk(1),pISO(1,2)),
+    P('t6','u2b',22000,'Card','paid',cur,pISO(0,3))
+  ].reverse();
+  const complaints=[
+    {id:uid('cm'),tenantId:'t1',unitId:'u1',title:'Kitchen tap leaking',category:'Plumbing',desc:'The cold tap on the kitchen sink drips constantly even when fully closed.',photos:[],date:monthsAgoISO(1)+'T10:20:00',status:'resolved',
+     updates:[{date:monthsAgoISO(1)+'T10:20:00',note:'Request submitted'},{date:monthsAgoISO(1)+'T15:00:00',note:'Plumber scheduled for Friday morning.'},{date:addDaysISO(monthsAgoISO(1),2)+'T12:00:00',note:'Washer replaced and tap sealed. Resolved.'}]},
+    {id:uid('cm'),tenantId:'t3',unitId:'u4',title:'Bedroom socket not working',category:'Electrical',desc:'The socket next to the bed has no power since Sunday. The rest of the room is fine.',photos:[],date:addDaysISO(todayISO(),-3)+'T18:45:00',status:'in_progress',
+     updates:[{date:addDaysISO(todayISO(),-3)+'T18:45:00',note:'Request submitted'},{date:addDaysISO(todayISO(),-2)+'T09:10:00',note:'Electrician assigned — visiting Thursday.'}]},
+    {id:uid('cm'),tenantId:'t4',unitId:'u6',title:'Garbage collection missed',category:'Cleanliness',desc:'Bins were not collected on Monday and they are now overflowing near the gate.',photos:[],date:addDaysISO(todayISO(),-1)+'T08:30:00',status:'open',
+     updates:[{date:addDaysISO(todayISO(),-1)+'T08:30:00',note:'Request submitted'}]}
+  ];
+  const messages=[
+    {id:uid('tk'),tenantId:'t1',subject:'Water bill clarification',date:addDaysISO(todayISO(),-4)+'T11:00:00',status:'answered',
+     thread:[{by:'tenant',text:'Hi — the service charge slip mentions a water share. How is the water share calculated for Room 1?',date:addDaysISO(todayISO(),-4)+'T11:00:00'},
+             {by:'admin',text:'Good morning John. Water is split evenly across occupied units since the borehole serves the whole block. Your share is KSh 400/month and it is already included in the KSh 15,000.',date:addDaysISO(todayISO(),-4)+'T14:30:00'}]},
+    {id:uid('tk'),tenantId:'t3',subject:'Requesting a payment plan',date:addDaysISO(todayISO(),-2)+'T09:15:00',status:'open',
+     thread:[{by:'tenant',text:'Hello, I have fallen behind on rent. Could we arrange to pay KSh 10,000 weekly until the balance is cleared?',date:addDaysISO(todayISO(),-2)+'T09:15:00'}]}
+  ];
+  const notifications=[
+    {id:uid('n'),to:'t1',type:'payment',title:'Payment received',body:fmtMoney(15000)+' received for '+periodLabel(cur)+'. Your balance is '+fmtMoney(0)+'.',date:pISO(0,2)+'T09:30:00',read:true},
+    {id:uid('n'),to:'t1',type:'announcement',title:'Water supply interruption',body:'Borehole maintenance on Thursday, 9:00 am – 2:00 pm. Store water accordingly.',date:addDaysISO(todayISO(),-2)+'T08:00:00',read:true},
+    {id:uid('n'),to:'t1',type:'maintenance',title:'Maintenance resolved',body:'Kitchen tap leaking — the washer was replaced and the tap sealed.',date:addDaysISO(monthsAgoISO(1),2)+'T12:00:00',read:true},
+    {id:uid('n'),to:'admin',type:'payment',title:'Payment received — John Doe',body:'Room 1 · '+fmtMoney(15000)+' via M-PESA for '+periodLabel(cur)+'.',date:pISO(0,2)+'T09:30:00',read:true},
+    {id:uid('n'),to:'admin',type:'payment',title:'Payment received — Jane Doe',body:'Room 2 · '+fmtMoney(15000)+' via bank transfer for '+periodLabel(cur)+'.',date:pISO(0,1)+'T10:05:00',read:true},
+    {id:uid('n'),to:'admin',type:'maintenance',title:'New maintenance request',body:'Michael Doe (Room 4): Bedroom socket not working.',date:addDaysISO(todayISO(),-3)+'T18:45:00',read:false},
+    {id:uid('n'),to:'admin',type:'message',title:'New support ticket',body:'Michael Doe: "Requesting a payment plan".',date:addDaysISO(todayISO(),-2)+'T09:15:00',read:false}
+  ];
+  return {
+    settings:{reminderDays:3},
+    counters:{receipt:receipts},
+    properties:props,units,tenants,payments,complaints,messages,
+    announcements:[{id:uid('an'),title:'Water supply interruption',body:'The borehole pump will be serviced this Thursday between 9:00 am and 2:00 pm. Water will be off during this window — please store what you need. The elevated tank will keep a small reserve.',propertyId:'p1',date:addDaysISO(todayISO(),-2)+'T08:00:00'}],
+    notifications
+  };
+}
+
+/* ---------- lookups (single access layer) ---------- */
+const prop=id=>db.properties.find(p=>p.id===id);
+const unit=id=>db.units.find(u=>u.id===id);
+const tenant=id=>db.tenants.find(t=>t.id===id);
+const tenantOf=u=>db.tenants.find(t=>t.unitId===u.id&&t.active);
+const unitOf=t=>db.units.find(u=>u.tenantId===t.id&&t.active);
+const myTenants=db=>0; // (tenant pages only ever use the myX() helpers below)
+const me=()=>tenant(session().tid);
+const myUnit=()=>unitOf(me());
+const myPayments=()=>db.payments.filter(p=>p.tenantId===session().tid);
+const myComplaints=()=>db.complaints.filter(c=>c.tenantId===session().tid);
+const myTickets=()=>db.messages.filter(m=>m.tenantId===session().tid);
+const myNotes=()=>db.notifications.filter(n=>n.to===session().tid);
+const adminNotes=()=>db.notifications.filter(n=>n.to==='admin');
+
+/* ---------- statuses ---------- */
+function tenantStatus(t){
+  if(!t||!t.active)return{key:'vacant',label:'Vacant'};
+  if(t.balance>0&&t.dueDate){
+    const d=diffDays(todayISO(),t.dueDate);
+    if(d<0)return{key:'overdue',label:'Overdue'};
+    if(d===0)return{key:'due',label:'Due today'};
+    if(d<=db.settings.reminderDays)return{key:'due',label:'Payment due'};
+  }
+  return{key:'ok',label:'Occupied'};
+}
+function unitStatus(u){
+  if(u.status==='reserved')return{key:'reserved',label:'Reserved'};
+  if(u.status==='vacant')return{key:'vacant',label:'Vacant'};
+  const t=tenantOf(u);return t?tenantStatus(t):{key:'vacant',label:'Vacant'};
+}
+function duePhrase(t){
+  if(!t.dueDate)return'—';
+  const d=diffDays(todayISO(),t.dueDate);
+  if(d===0)return'Due today';
+  if(d<0)return Math.abs(d)+' day'+(d<-1?'s':'')+' overdue';
+  return'in '+d+' day'+(d>1?'s':'');
+}
+function stamp(k,l){return `<span class="stamp st-${k}">${l}</span>`}
+
+/* ---------- notifications & reminder engine ---------- */
+function addNote(n){
+  if(n.key&&db.notifications.some(x=>x.key===n.key))return false;
+  db.notifications.unshift(Object.assign({id:uid('n'),date:nowISO(),read:false},n));
+  return true;
+}
+function runReminders(){
+  const rd=db.settings.reminderDays;let added=0;
+  db.tenants.filter(t=>t.active&&t.balance>0&&t.dueDate).forEach(t=>{
+    const u=unitOf(t);if(!u)return;
+    const d=diffDays(todayISO(),t.dueDate),per=t.dueDate.slice(0,7);
+    const rent=fmtMoney(t.balance),due=fmtDate(t.dueDate);
+    let n=null;
+    if(d<0)n={to:t.id,type:'reminder',key:`ovd-${t.id}-${per}`,title:'Rent overdue',body:`Your rent of ${rent} was due on ${due}. Please settle it to avoid penalties or lease action.`};
+    else if(d===0)n={to:t.id,type:'reminder',key:`due0-${t.id}-${per}`,title:'Rent is due today',body:`Your rent of ${rent} is due today. Pay from the Payments page to receive your receipt instantly.`};
+    else if(d<=rd)n={to:t.id,type:'reminder',key:`soon-${t.id}-${per}`,title:`Rent due in ${d} day${d>1?'s':''}`,body:`A friendly reminder — your rent of ${rent} for ${unit.label}, ${prop(u.propertyId).name} is due on ${due}.`};
+    if(n&&addNote(n))added++;
+  });
+  if(added)saveDB();
+}
+const noteIcon={payment:'receipt',reminder:'alarm-clock',overdue:'triangle-alert',announcement:'megaphone',maintenance:'wrench',message:'message-square',system:'info'};
+
+/* ---------- core actions ---------- */
+const makeRef=()=>Array.from({length:10},()=>'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*31)]).join('');
+function nextReceipt(){return 'RCP-'+pad(db.counters.receipt++,4)}
+function advanceDue(t){const d=t.dueDate?new Date(t.dueDate+'T00:00:00'):new Date();t.dueDate=dayISO(new Date(d.getFullYear(),d.getMonth()+1,t.dueDay||5))}
+function recordPayment({tid,amount,method,status='paid'}){
+  const t=tenant(tid),u=unitOf(t);amount=Math.round(+amount||0);
+  const period=t.dueDate?t.dueDate.slice(0,7):curPeriod();
+  const p={id:uid('pay'),tenantId:tid,unitId:u?u.id:null,amount,method,status,period,date:nowISO(),ref:makeRef(),receiptNo:status==='paid'?nextReceipt():null};
+  db.payments.unshift(p);
+  if(status==='paid'){
+    const nb=t.balance-amount;
+    if(nb<0){t.credits+=-nb;t.balance=0}else t.balance=nb;
+    if(t.balance===0)advanceDue(t);
+    addNote({to:tid,type:'payment',title:'Payment received',body:`${fmtMoney(amount)} received for ${periodLabel(period)}. Your balance is now ${fmtMoney(t.balance)}${t.credits?` · credits ${fmtMoney(t.credits)}`:''}.`});
+    addNote({to:'admin',type:'payment',title:'Payment received — '+t.name,body:`${u?u.label:'—'} · ${fmtMoney(amount)} via ${method} for ${periodLabel(period)}.`});
+  }else{
+    addNote({to:tid,type:'payment',title:'Payment failed',body:`Your ${method} payment of ${fmtMoney(amount)} was rejected. No funds were deducted — please try again from the Payments page.`});
+    addNote({to:'admin',type:'payment',title:'Payment failed — '+t.name,body:`${u?u.label:'—'} · ${fmtMoney(amount)} via ${method} was rejected.`});
+  }
+  saveDB();return p;
+}
+function applyCredits(){
+  const t=me(),amt=Math.min(t.credits,t.balance);
+  if(amt<=0)return;
+  t.credits-=amt;t.balance-=amt;
+  if(t.balance<=0){t.balance=0;advanceDue(t)}
+  addNote({to:t.id,type:'system',title:'Credits applied',body:`${fmtMoney(amt)} of credits was applied to your balance. Outstanding balance: ${fmtMoney(t.balance)}.`});
+  saveDB();toast(fmtMoney(amt)+' credits applied');refreshView();
+}
+function runBillingCycle(){
+  const per=curPeriod();let n=0,skip=0;
+  db.tenants.filter(t=>t.active).forEach(t=>{
+    const u=unitOf(t);if(!u)return;
+    if(t.billed.includes(per)){skip++;return}
+    t.billed.push(per);t.balance+=u.rent;
+    t.dueDate=dayISO(new Date(new Date().getFullYear(),new Date().getMonth(),t.dueDay));
+    addNote({to:t.id,type:'reminder',title:'Rent posted for '+periodLabel(per),body:`${fmtMoney(u.rent)} for ${u.label}, ${prop(u.propertyId).name} has been posted to your account. Due by ${fmtDate(t.dueDate)}.`});
+    n++;
+  });
+  saveDB();
+  toast(n?`Charges posted for ${n} tenant${n>1?'s':''}`:`All active tenants are already billed for ${periodLabel(per)}`,n?'ok':'warn');
+  refreshView();
+}
+function createComplaint({title,category,desc,photos}){
+  const t=me(),u=myUnit();
+  const c={id:uid('cm'),tenantId:t.id,unitId:u?u.id:null,title,category,desc,photos:photos||[],date:nowISO(),status:'open',updates:[{date:nowISO(),note:'Request submitted'}]};
+  db.complaints.unshift(c);
+  addNote({to:t.id,type:'maintenance',title:'Request received',body:`"${title}" has been logged for ${u?u.label:'your unit'}. We will keep you updated here.`});
+  addNote({to:'admin',type:'maintenance',title:'New maintenance request',body:`${t.name} (${u?u.label:'—'}): ${title}`});
+  saveDB();return c;
+}
+function advanceComplaint(id,status,note){
+  const c=db.complaints.find(x=>x.id===id);if(!c)return;
+  c.status=status;c.updates.push({date:nowISO(),note:note||(status==='in_progress'?'A technician has been assigned and work is under way.':'Issue resolved and verified. Thank you for your patience.')});
+  addNote({to:c.tenantId,type:'maintenance',title:status==='in_progress'?'Maintenance in progress':'Maintenance resolved',body:`"${c.title}" — ${c.updates[c.updates.length-1].note}`});
+  saveDB();
+}
+function createTicket(tid,subject,text,by='tenant'){
+  const m={id:uid('tk'),tenantId:tid,subject,date:nowISO(),status:by==='admin'?'answered':'open',thread:[{by,text,date:nowISO()}]};
+  db.messages.unshift(m);
+  const t=tenant(tid);
+  addNote({to:by==='admin'?tid:'admin',type:'message',title:by==='admin'?'New message from management':'New support ticket',body:by==='admin'?`${subject}: ${text.slice(0,80)}`:`${t.name}: "${subject}"`});
+  saveDB();return m;
+}
+function replyTicket(id,text,by){
+  const m=db.messages.find(x=>x.id===id);if(!m)return;
+  m.thread.push({by,text,date:nowISO()});m.status=by==='admin'?'answered':'open';m.date=nowISO();
+  const t=tenant(m.tenantId);
+  addNote({to:by==='admin'?m.tenantId:'admin',type:'message',title:by==='admin'?'Reply from management':'New reply — '+t.name,body:text.slice(0,90)});
+  saveDB();
+}
+function postAnnouncement(title,body,propertyId){
+  db.announcements.unshift({id:uid('an'),title,body,propertyId,date:nowISO()});
+  const targets=db.tenants.filter(t=>t.active&&unitOf(t)&&(propertyId==='all'||unitOf(t).propertyId===propertyId));
+  targets.forEach(t=>addNote({to:t.id,type:'announcement',title,body}));
+  saveDB();return targets.length;
+}
+
+/* ---------- session / auth ---------- */
+const ADMIN_ACC={id:'admin',name:'Administrator',email:'admin@pangi.app'};
+function session(){try{return JSON.parse(sessionStorage.getItem('pangi_session'))}catch(e){return null}}
+function setSession(s){s?sessionStorage.setItem('pangi_session',JSON.stringify(s)):sessionStorage.removeItem('pangi_session')}
+function doLogin(e){
+  e.preventDefault();
+  const email=$('#li-email').value.trim().toLowerCase(),pass=$('#li-pass').value;
+  const t=db.tenants.find(x=>x.email.toLowerCase()===email&&x.pass===pass);
+  const isAdmin=email===ADMIN_ACC.email&&pass==='demo123';
+  if(!t&&!isAdmin){
+    $('#li-err').textContent='Email or password is incorrect.';
+    $('.login-card').classList.remove('shake');void $('.login-card').offsetWidth;$('.login-card').classList.add('shake');
+    return;
+  }
+  setSession(isAdmin?{role:'admin',tid:'admin',name:ADMIN_ACC.name}:{role:'tenant',tid:t.id,name:t.name});
+  runReminders();
+  nav(isAdmin?'admin/overview':'tenant/dashboard');
+}
+function fillLogin(email){$('#li-email').value=email;$('#li-pass').value='demo123';$('#li-err').textContent=''}
+function logout(){setSession(null);nav('login')}
+
+/* ---------- router ---------- */
+function nav(r){if('#/'+r===location.hash)renderRoute();else location.hash='#/'+r}
+window.addEventListener('hashchange',renderRoute);
+const ADMIN_PAGES=[
+  {r:'overview',t:'Portfolio overview',i:'layout-dashboard'},{r:'properties',t:'Properties',i:'building-2'},
+  {r:'tenants',t:'Tenants',i:'users'},{r:'maintenance',t:'Maintenance',i:'wrench'},
+  {r:'messages',t:'Messages',i:'message-square'},{r:'announcements',t:'Announcements',i:'megaphone'},
+  {r:'settings',t:'Settings',i:'settings'}];
+const TENANT_PAGES=[
+  {r:'dashboard',t:'Dashboard',i:'layout-dashboard'},{r:'house',t:'My house',i:'home'},
+  {r:'payments',t:'Payments',i:'wallet'},{r:'maintenance',t:'Maintenance',i:'wrench'},
+  {r:'messages',t:'Messages',i:'message-square'},{r:'notifications',t:'Notifications',i:'bell'},
+  {r:'profile',t:'Profile',i:'user'}];
+function renderRoute(){
+  const s=session(),raw=(location.hash||'').replace(/^#\//,'');
+  closeDrawer(true);closeModal(true);
+  if(!s){if(raw!=='login')return nav('login');return renderLogin()}
+  const parts=raw.split('/');
+  if(parts[0]!==s.role||(parts.length<2))return nav(s.role==='admin'?'admin/overview':'tenant/dashboard');
+  renderShell(parts[1]);
+  const fn=window['pg_'+parts[0]+'_'+parts[1]]||window['pg_'+s.role+'_'+(s.role==='admin'?'overview':'dashboard')];
+  $('#view').innerHTML='';fn();
+  refreshIcons();
+}
+function refreshView(){renderRoute()}
+function renderShell(active){
+  const s=session(),isAdmin=s.role==='admin',pages=isAdmin?ADMIN_PAGES:TENANT_PAGES;
+  const pg=pages.find(p=>p.r===active)||pages[0];
+  const unread=isAdmin?adminNotes().filter(n=>!n.read).length:myNotes().filter(n=>!n.read).length;
+  app.innerHTML=`<div id="shell">
+    <aside>
+      <div class="wordmark">
+        <svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="4.5" width="21" height="17" rx="1"/><line x1="13" y1="4.5" x2="13" y2="21.5"/><line x1="2.5" y1="13" x2="23.5" y2="13"/><line x1="9" y1="13" x2="9" y2="21.5" opacity=".45"/><line x1="17" y1="4.5" x2="17" y2="13" opacity=".45"/></svg>
+        <div><b>Pangi</b><small>Estate ledger</small></div>
+      </div>
+      <nav>${pages.map(p=>`<button class="nitem ${p.r===active?'on':''}" onclick="nav('${s.role}/${p.r}')"><i data-lucide="${p.i}"></i>${p.t}${p.r==='messages'&&unread&&isAdmin?'':''}</button>`).join('')}</nav>
+      <div class="aside-foot">${db.tenants.filter(t=>t.active).length} tenants · ${db.units.length} units</div>
+    </aside>
+    <div id="main">
+      <header id="topbar">
+        <span id="ptitle">${pg.t}</span>
+        <div class="top-right">
+          <span class="top-date">${new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span>
+          <div class="bell-wrap">
+            <button class="bell-btn" onclick="toggleBell(event)"><i data-lucide="bell"></i>${unread?`<span class="bell-n">${unread}</span>`:''}</button>
+            <div class="bell-drop" id="bell-drop"></div>
+          </div>
+          <div class="uchip">
+            <span class="ava">${initials(s.name)}</span>
+            <span class="un">${esc(s.name)}<small>${isAdmin?'Administrator':'Tenant'}</small></span>
+          </div>
+          <button class="bell-btn" title="Sign out" onclick="logout()"><i data-lucide="log-out"></i></button>
+        </div>
+      </header>
+      <div id="view"></div>
+    </div></div>`;
+}
+document.addEventListener('click',e=>{
+  const bw=e.target.closest('.bell-wrap');
+  if(!bw)$('#bell-drop')&&$('#bell-drop').classList.remove('on');
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeDrawer()}});
+
+/* ---------- bell dropdown ---------- */
+function toggleBell(e){
+  e.stopPropagation();
+  const d=$('#bell-drop');if(!d)return;
+  if(d.classList.contains('on'))return d.classList.remove('on');
+  const s=session(),list=(s.role==='admin'?adminNotes():myNotes()).slice(0,7);
+  d.innerHTML=`<div class="bh"><b>Notifications</b><button onclick="markAllRead()">Mark all read</button></div>
+    ${list.length?list.map(n=>noteItem(n,true)).join(''):'<div class="empty">Nothing yet.</div>'}`;
+  d.classList.add('on');refreshIcons();
+}
+function noteItem(n,compact){
+  return `<div class="note-it ${n.read?'':'unread'}" onclick="goNote('${n.id}')">
+    <span class="nic"><i data-lucide="${noteIcon[n.type]||'info'}"></i></span>
+    <div style="min-width:0"><b>${esc(n.title)}</b><p>${esc(n.body)}</p></div>
+    ${n.read?'':`<span class="unread-dot"></span>`}<span class="nt">${compact?ago(n.date):fmtDT(n.date)}</span></div>`;
+}
+function markAllRead(){
+  const s=session();
+  (s.role==='admin'?adminNotes():myNotes()).forEach(n=>n.read=true);
+  saveDB();renderRoute();
+}
+function goNote(id){
+  const n=db.notifications.find(x=>x.id===id);if(n)n.read=true;saveDB();
+  const s=session();
+  const dest=s.role==='admin'
+    ?({payment:'overview',maintenance:'maintenance',message:'messages'}[n.type]||'overview')
+    :({payment:'payments',reminder:'payments',maintenance:'maintenance',message:'messages',announcement:'house'}[n.type]||'dashboard');
+  nav(s.role+'/'+dest);
+}
+
+/* ---------- toast / modal / drawer ---------- */
+function toast(msg,kind='ok'){
+  const el=document.createElement('div');el.className='toast t-'+kind;
+  el.innerHTML=`<i data-lucide="${kind==='ok'?'check':kind==='err'?'triangle-alert':'info'}"></i><span>${msg}</span>`;
+  $('#toast-root').appendChild(el);refreshIcons();
+  requestAnimationFrame(()=>el.classList.add('on'));
+  setTimeout(()=>{el.classList.remove('on');setTimeout(()=>el.remove(),300)},3600);
+}
+function openModal(html){
+  $('#modal-root').innerHTML=`<div class="modal-overlay" onmousedown="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`;
+  requestAnimationFrame(()=>$('#modal-root .modal-overlay').classList.add('on'));refreshIcons();
+}
+function closeModal(instant){
+  const o=$('#modal-root .modal-overlay');if(!o)return;
+  if(instant)return $('#modal-root').innerHTML='';
+  o.classList.remove('on');setTimeout(()=>$('#modal-root').innerHTML='',250);
+}
+function confirmModal(title,body,okLabel,js){
+  openModal(`<div class="modal-h"><h3>${title}</h3><button class="drawer-x" onclick="closeModal()"><i data-lucide="x"></i></button></div>
+    <div class="modal-b"><p style="padding-top:12px;color:var(--ink2)">${body}</p></div>
+    <div class="modal-f"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" onclick="${js}">${okLabel}</button></div>`);
+}
+function openDrawer(html){
+  $('#drawer-root').innerHTML=`<div class="scrim" onclick="closeDrawer()"></div><aside class="drawer">${html}</aside>`;
+  requestAnimationFrame(()=>{$('#drawer-root .scrim').classList.add('on');$('#drawer-root .drawer').classList.add('on')});
+  refreshIcons();
+}
+function closeDrawer(instant){
+  const d=$('#drawer-root .drawer');if(!d)return;
+  if(instant)return $('#drawer-root').innerHTML='';
+  $('#drawer-root .scrim').classList.remove('on');d.classList.remove('on');
+  setTimeout(()=>$('#drawer-root').innerHTML='',320);
+}
+
+/* ---------- shared components ---------- */
+function phead(title,sub,acts){return `<div class="phead"><h1>${title}</h1><span class="sub">${sub||''}</span><span class="acts">${acts||''}</span></div>`}
+function avatar(name,cls){return `<span class="ava ${cls||''}">${esc(initials(name))}</span>`}
+function planHTML(p,opts={}){
+  const units=db.units.filter(u=>u.propertyId===p.id);
+  const half=Math.ceil(units.length/2);
+  const rows=[units.slice(0,half),units.slice(half)];
+  const room=u=>{
+    const st=unitStatus(u),t=tenantOf(u);
+    const name=opts.anon?(t?'Tenant':'Vacant'):(t?t.name:(u.status==='reserved'?(u.reservedFor||'Reserved'):'Vacant'));
+    const you=opts.me&&t&&t.id===opts.me;
+    const click=opts.anon?'':` onclick="openUnitDrawer('${u.id}')"`;
+    return `<button class="room st-${st.key}${you?' you':''}"${click}>
+      <span class="r-top"><span class="dot"></span><span class="r-no">${esc(u.label)}</span></span>
+      <span class="r-who">${esc(name)}${you?'<em>YOU</em>':''}</span>
+      <span class="r-rent">${opts.anon?'&nbsp;':fmtMoney(u.rent)}</span>
+      <span class="r-st">${st.label}</span>
+      <i class="door ${rows[0].includes(u)?'d-s':'d-n'}"></i></button>`;
+  };
+  return `<div class="plan-frame"><span class="plan-name">${esc(p.name)}</span><span class="plan-n">N <i data-lucide="arrow-up"></i></span>
+    <div class="plan-grid" style="--cols:${p.cols||3}">
+      <div class="p-row">${rows[0].map(room).join('')}</div>
+      <div class="p-corridor"><span>Corridor</span><span>Stairwell</span></div>
+      <div class="p-row">${rows[1].map(room).join('')}</div>
+    </div></div>`;
+}
+function legendHTML(p){
+  const units=db.units.filter(u=>u.propertyId===p.id);
+  const c=k=>units.filter(u=>unitStatus(u).key===k).length;
+  return [['ok','Occupied'],['reserved','Reserved'],['due','Payment due'],['overdue','Overdue'],['vacant','Vacant']]
+    .map(([k,l])=>`<span class="lg-item lg-${k}"><span class="dot"></span>${l} · ${c(k)}</span>`).join('');
+}
+function monthStripHTML(t){
+  const now=new Date(),dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const dueInMonth=t.dueDate&&t.dueDate.slice(0,7)===curPeriod();
+  const missed=dueInMonth&&diffDays(todayISO(),t.dueDate)<0;
+  let cells='';
+  for(let d=1;d<=dim;d++){
+    let cls=d===now.getDate()?'today':'';
+    if(dueInMonth&&+t.dueDate.slice(8)===d)cls+=(missed?' miss':' due');
+    cells+=`<span class="ms-c ${cls}">${d}</span>`;
+  }
+  return `<div class="mstrip">${cells}</div>`;
+}
+function receiptHTML(p){
+  const t=tenant(p.tenantId),u=p.unitId?unit(p.unitId):null;
+  return `<div style="font-family:var(--mono);border:1.5px solid var(--ink);padding:22px;position:relative">
+    <div style="text-align:center;letter-spacing:.25em;font-weight:600;font-size:13px">PANGI · ESTATE LEDGER</div>
+    <div style="text-align:center;font-size:10px;letter-spacing:.2em;color:var(--ink2);margin:4px 0 14px">OFFICIAL RENT RECEIPT — ${esc(p.receiptNo)}</div>
+    <div style="border-top:1.5px dashed var(--line2);margin-bottom:12px"></div>
+    ${[['Received from',t?t.name:'—'],['Unit',(u?u.label+' · ':'')+prop(u.propertyId).name],['Amount',fmtMoney(p.amount)],['Being payment for',periodLabel(p.period)],['Method',p.method],['Reference',p.ref],['Date',fmtDT(p.date)]]
+      .map(([k,v])=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0"><span style="color:var(--ink2)">${k}</span><b>${esc(v)}</b></div>`).join('')}
+    <div style="border-top:1.5px dashed var(--line2);margin:12px 0"></div>
+    <div style="font-size:10px;color:var(--ink3);letter-spacing:.1em">THIS RECEIPT IS GENERATED ELECTRONICALLY AND IS VALID WITHOUT SIGNATURE.</div>
+    <div class="stamp st-ok" style="position:absolute;right:18px;bottom:52px;transform:rotate(-8deg);font-size:13px;padding:7px 12px">Paid</div>
+  </div>`;
+}
+function showReceipt(pid){
+  const p=db.payments.find(x=>x.id===pid);
+  openModal(`<div class="modal-h"><h3>Receipt ${esc(p.receiptNo)}</h3><button class="drawer-x" onclick="closeModal()"><i data-lucide="x"></i></button></div>
+    <div class="modal-b" style="padding-top:16px">${receiptHTML(p)}</div>
+    <div class="modal-f"><button class="btn ghost" onclick="closeModal()">Close</button><button class="btn" onclick="printReceipt('${p.id}')"><i data-lucide="printer"></i>Print</button></div>`);
+}
+function printReceipt(pid){
+  const p=db.payments.find(x=>x.id===pid);
+  $('#print-area').innerHTML=`<div style="max-width:520px;margin:20px auto">${receiptHTML(p)}</div>`;
+  window.print();
+}
+
+/* ---------- file photos ---------- */
+let pendingPhotos=[];
+function fileToThumb(file){return new Promise(res=>{
+  const r=new FileReader();
+  r.onload=()=>{const img=new Image();img.onload=()=>{
+    const M=900,s=Math.min(1,M/Math.max(img.width,img.height));
+    const c=document.createElement('canvas');c.width=img.width*s;c.height=img.height*s;
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    res(c.toDataURL('image/jpeg',.72));
+  };img.src=r.result};
+  r.readAsDataURL(file);
+})}
+async function onPhotosPicked(input){
+  for(const f of input.files.slice(0,3-pendingPhotos.length?input.files.length:0)){}
+  const files=[...input.files].slice(0,3-pendingPhotos.length);
+  for(const f of files){if(!f.type.startsWith('image/'))continue;pendingPhotos.push(await fileToThumb(f))}
+  renderPhotoThumbs();input.value='';
+}
+function renderPhotoThumbs(){
+  const box=$('#ph-box');if(!box)return;
+  box.innerHTML=pendingPhotos.map((src,i)=>`<span class="ph-thumb"><img src="${src}"><button onclick="removePendingPhoto(${i})"><i data-lucide="x"></i></button></span>`).join('');
+  refreshIcons();
+}
+function removePendingPhoto(i){pendingPhotos.splice(i,1);renderPhotoThumbs()}
+
+/* =====================================================================
+   LOGIN
+===================================================================== */
+function renderLogin(){
+  app.innerHTML=`<div class="login">
+    <div class="login-left">
+      <div class="wordmark" style="border:none;padding:0">
+        <svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.6" style="width:34px;height:34px"><rect x="2.5" y="4.5" width="21" height="17" rx="1"/><line x1="13" y1="4.5" x2="13" y2="21.5"/><line x1="2.5" y1="13" x2="23.5" y2="13"/><line x1="9" y1="13" x2="9" y2="21.5" opacity=".45"/><line x1="17" y1="4.5" x2="17" y2="13" opacity=".45"/></svg>
+        <div><b style="font-size:26px">Pangi</b><small>Estate ledger & tenant portal</small></div>
+      </div>
+      <h1>Every room,<br>accounted for.</h1>
+      <p class="lede">One ledger for your properties, your tenants and their rent. Buildings drawn the way they actually stand, books kept the way they should be.</p>
+      <div class="login-plan">
+        ${planHTML(db.properties[0])}
+        <div class="plan-cap">Green Valley Apartments — live unit status</div>
+      </div>
+    </div>
+    <div class="login-right">
+      <form class="login-card" onsubmit="doLogin(event)">
+        <h2>Sign in</h2>
+        <p class="lc-sub">Tenants see only their own world. Management sees the whole book.</p>
+        <label>Email</label><input id="li-email" type="email" placeholder="you@example.com" required>
+        <label>Password</label><input id="li-pass" type="password" placeholder="••••••••" required>
+        <div class="form-err" id="li-err"></div>
+        <button class="btn wide" style="margin-top:4px">Sign in <i data-lucide="chevron-right"></i></button>
+        <div class="demo-chips">
+          <button type="button" class="chip" onclick="fillLogin('admin@pangi.app')">Administrator</button>
+          <button type="button" class="chip" onclick="fillLogin('john@example.com')">John Doe · Room 1</button>
+          <button type="button" class="chip" onclick="fillLogin('michael@example.com')">Michael Doe · Room 4</button>
+        </div>
+        <p class="demo-note">Demo build — every account uses the password <code>demo123</code>. All data lives in your browser only.</p>
+      </form>
+    </div></div>`;
+  refreshIcons();
+}
+
+/* =====================================================================
+   ADMIN — OVERVIEW
+===================================================================== */
+function pg_admin_overview(){
+  const cur=curPeriod();
+  const collected=db.payments.filter(p=>p.status==='paid'&&p.date.slice(0,7)===cur).reduce((a,p)=>a+p.amount,0);
+  const outstanding=db.tenants.filter(t=>t.active).reduce((a,t)=>a+t.balance,0);
+  const occ=db.units.filter(u=>u.status==='occupied'&&tenantOf(u)).length;
+  const acts=adminNotes().slice(0,8);
+  const debtors=db.tenants.filter(t=>t.active&&t.balance>0).sort((a,b)=>b.balance-a.balance);
+  const months=[];for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);const k=dayISO(d).slice(0,7);
+    months.push({k,l:d.toLocaleString('en-GB',{month:'short'}),v:db.payments.filter(p=>p.status==='paid'&&p.date.slice(0,7)===k).reduce((a,p)=>a+p.amount,0)})}
+  const max=Math.max(...months.map(m=>m.v),1);
+  const alreadyBilled=db.tenants.filter(t=>t.active&&unitOf(t)).every(t=>t.billed.includes(cur));
+  $('#view').innerHTML=`<div class="view">
+    ${phead('Portfolio overview',periodLabel(cur),`<button class="btn small ${alreadyBilled?'ghost':''}" onclick="confirmModal('Run billing cycle','Post this month&rsquo;s rent charge to every active tenant who has not yet been billed for ${periodLabel(cur)}.','Post charges','closeModal();runBillingCycle()')"><i data-lucide="calendar"></i>Run billing cycle</button>`)}
+    <div class="strip">
+      <div class="cell"><div class="lbl">Properties</div><div class="fig">${db.properties.length}</div></div>
+      <div class="cell"><div class="lbl">Units · occupied</div><div class="fig">${db.units.length} <small>· ${occ}</small></div></div>
+      <div class="cell"><div class="lbl">Collected — ${new Date().toLocaleDateString('en-GB',{month:'short'})}</div><div class="fig">${fmtMoney(collected)}</div></div>
+      <div class="cell"><div class="lbl">Outstanding</div><div class="fig" style="color:${outstanding?'var(--red)':'var(--green-d)'}">${fmtMoney(outstanding)}</div></div>
+      <div class="cell"><div class="lbl">Active tenants</div><div class="fig">${db.tenants.filter(t=>t.active).length}</div></div>
+    </div>
+    <div class="grid2">
+      <div class="panel"><div class="panel-h"><span>Collections — last 6 months</span></div><div class="panel-b">
+        <div class="bars">${months.map(m=>`<div class="bar"><span class="bv">${m.v?(m.v/1000)+'k':'—'}</span><i style="height:${Math.max(3,m.v/max*88)}%"></i><span class="bl">${m.l}</span></div>`).join('')}</div>
+      </div></div>
+      <div class="panel"><div class="panel-h"><span>Outstanding balances</span><span>${debtors.length?debtors.length+' tenant'+(debtors.length>1?'s':''):'All clear'}</span></div>
+        ${debtors.length?`<table class="ledger"><tbody>${debtors.map(t=>{const u=unitOf(t),st=tenantStatus(t);
+          return `<tr class="click" onclick="openUnitDrawer('${u.id}')"><td>${avatar(t.name)}</td><td><b>${esc(t.name)}</b><br><span class="small dim">${u.label} · ${prop(u.propertyId).name}</span></td>
+          <td class="num">${fmtMoney(t.balance)}<br><span class="small dim">${duePhrase(t)}</span></td><td>${stamp(st.key,st.label)}</td>
+          <td class="num"><button class="btn small" onclick="event.stopPropagation();adminPayModal('${t.id}')">Record payment</button></td></tr>`}).join('')}</tbody></table>`
+        :'<div class="empty">Every tenant is up to date.</div>'}
+      </div>
+    </div>
+    <div class="panel" style="margin-top:18px"><div class="panel-h"><span>Recent activity</span></div>
+      ${acts.length?acts.map(n=>noteItem(n,false)).join(''):'<div class="empty">No activity yet.</div>'}
+    </div></div>`;
+}
+
+/* =====================================================================
+   ADMIN — PROPERTIES (plan + unit drawer)
+===================================================================== */
+let propSel='p1';
+function pg_admin_properties(){
+  const p=prop(propSel);
+  const units=db.units.filter(u=>u.propertyId===p.id);
+  $('#view').innerHTML=`<div class="view">
+    ${phead('Properties','Click any room to open its complete record')}
+    <div class="tabs">${db.properties.map(x=>`<button class="tab ${x.id===propSel?'on':''}" onclick="propSel='${x.id}';refreshView()">${esc(x.name)}</button>`).join('')}</div>
+    <div class="panel"><div class="panel-h"><span>Building plan — unit status</span><span style="display:flex;gap:14px;flex-wrap:wrap">${legendHTML(p)}</span></div>
+      <div class="panel-b">${planHTML(p)}</div></div>
+    <div class="grid2">
+      <div class="panel"><div class="panel-h"><span>Property record</span></div><div class="panel-b">
+        <div class="kv"><span class="k">Name</span><span class="v">${esc(p.name)}</span></div>
+        <div class="kv"><span class="k">Location</span><span class="v">${esc(p.location)}</span></div>
+        <div class="kv"><span class="k">Units</span><span class="v mono">${units.length}</span></div>
+        <div class="kv"><span class="k">Description</span><span class="v" style="font-weight:400;max-width:60%;text-align:right">${esc(p.desc)}</span></div>
+        <div class="divider-label">Amenities</div>
+        <div class="amen">${p.amenities.map(a=>`<span><i data-lucide="check"></i>${esc(a)}</span>`).join('')}</div>
+      </div></div>
+      <div class="panel"><div class="panel-h"><span>Unit roster — ${esc(p.name)}</span></div>
+        <table class="ledger"><thead><tr><th>Unit</th><th>Tenant</th><th class="num">Rent</th><th class="num">Balance</th><th>Status</th></tr></thead>
+        <tbody>${units.map(u=>{const t=tenantOf(u),st=unitStatus(u);
+          return `<tr class="click" onclick="openUnitDrawer('${u.id}')"><td class="mono" style="font-weight:600">${esc(u.label)}</td>
+          <td>${t?esc(t.name):'<span class="dim">'+(u.status==='reserved'?'Reserved':'Vacant')+'</span>'}</td>
+          <td class="num">${fmtMoney(u.rent)}</td><td class="num">${t?fmtMoney(t.balance):'—'}</td><td>${stamp(st.key,st.label)}</td></tr>`}).join('')}</tbody></table>
+      </div>
+    </div></div>`;
+}
+function openUnitDrawer(uidv){
+  const u=unit(uidv);if(!u)return;
+  const p=prop(u.propertyId),t=tenantOf(u),st=unitStatus(u);
+  const pays=t?db.payments.filter(x=>x.tenantId===t.id&&x.status==='paid').slice(0,6):[];
+  const comps=db.complaints.filter(x=>x.unitId===u.id);
+  const leasePct=t&&t.leaseStart?Math.min(100,Math.max(0,(Date.now()-new Date(t.leaseStart))/ (new Date(t.leaseEnd)-new Date(t.leaseStart))*100)):0;
+  openDrawer(`
+  <div class="drawer-h"><div><h2>${esc(u.label)}</h2><div class="sub">${esc(p.name)} · ${esc(p.location)}</div></div>
+    <span style="margin:6px 0 0 auto">${stamp(st.key,st.label)}</span>
+    <button class="drawer-x" onclick="closeDrawer()"><i data-lucide="x"></i></button></div>
+  <div class="drawer-b">
+    ${t?`
+    <div class="dsec"><div class="dh"><span>Tenant</span></div><div class="db">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0 6px">${avatar(t.name)}<div><b>${esc(t.name)}</b><br><span class="small dim">${esc(t.email)} · ${esc(t.phone)}</span></div></div>
+      <div class="kv"><span class="k">Move-in</span><span class="v">${fmtDate(t.moveIn)}</span></div>
+      <div class="kv"><span class="k">Rent due day</span><span class="v">${t.dueDay}${t.dueDay===1?'st':t.dueDay===2?'nd':t.dueDay===3?'rd':'th'} of every month</span></div>
+      <div class="kv"><span class="k">Next due</span><span class="v">${fmtDate(t.dueDate)} <span class="small dim">(${duePhrase(t)})</span></span></div>
+    </div></div>
+    <div class="dsec"><div class="dh"><span>Financials</span></div><div class="db">
+      <div class="kv"><span class="k">Monthly rent</span><span class="v mono">${fmtMoney(u.rent)}</span></div>
+      <div class="kv"><span class="k">Deposit held</span><span class="v mono">${fmtMoney(u.deposit)}</span></div>
+      <div class="kv"><span class="k">Outstanding balance</span><span class="v mono" style="color:${t.balance?'var(--red)':'var(--green-d)'}">${fmtMoney(t.balance)}</span></div>
+      <div class="kv"><span class="k">Credits</span><span class="v mono">${fmtMoney(t.credits)}</span></div>
+    </div></div>
+    <div class="dsec"><div class="dh"><span>Lease</span></div><div class="db">
+      <div class="kv"><span class="k">Period</span><span class="v">${fmtDate(t.leaseStart)} — ${fmtDate(t.leaseEnd)}</span></div>
+      <div class="lease-bar"><i style="width:${leasePct}%"></i></div>
+      <span class="small dim">${Math.round(leasePct)}% of lease elapsed</span>
+    </div></div>`:`
+    <div class="dsec"><div class="dh"><span>Unit</span></div><div class="db">
+      <div class="kv"><span class="k">Status</span><span class="v">${st.label}${u.reservedFor?' — '+esc(u.reservedFor):''}</span></div>
+      <div class="kv"><span class="k">Monthly rent</span><span class="v mono">${fmtMoney(u.rent)}</span></div>
+      <div class="kv"><span class="k">Deposit</span><span class="v mono">${fmtMoney(u.deposit)}</span></div>
+      <div class="kv"><span class="k">Size</span><span class="v">${esc(u.size||'—')}</span></div>
+      <div style="padding:8px 0 4px" class="small dim">${esc(u.desc||'')}</div>
+    </div></div>`}
+    ${t&&pays.length?`<div class="dsec"><div class="dh"><span>Recent payments</span><button class="rowlink" onclick="adminPayModal('${t.id}')">Record payment</button></div>
+      <table class="ledger"><tbody>${pays.map(x=>`<tr><td class="small dim">${fmtDate(x.date.slice(0,10))}</td><td class="small">${periodLabel(x.period)}</td><td class="num">${fmtMoney(x.amount)}</td><td><button class="rowlink" onclick="showReceipt('${x.id}')">${esc(x.receiptNo)}</button></td></tr>`).join('')}</tbody></table></div>`:''}
+    ${comps.length?`<div class="dsec"><div class="dh"><span>Complaints & maintenance</span></div>
+      <table class="ledger"><tbody>${comps.map(c=>`<tr class="click" onclick="complaintModal('${c.id}')"><td><b class="small">${esc(c.title)}</b><br><span class="small dim">${esc(c.category)} · ${ago(c.date)}</span></td><td>${stamp(c.status==='open'?'open':c.status==='in_progress'?'due':'ok',c.status==='open'?'Open':c.status==='in_progress'?'In progress':'Resolved')}</td></tr>`).join('')}</tbody></table></div>`:''}
+    <div class="dsec"><div class="dh"><span>Actions</span></div><div class="db" style="display:flex;flex-wrap:wrap;gap:8px;padding-top:12px">
+      ${t?`<button class="btn small" onclick="adminPayModal('${t.id}')"><i data-lucide="receipt"></i>Record payment</button>
+      <button class="btn small ghost" onclick="adminMsgModal('${t.id}')"><i data-lucide="message-square"></i>Message</button>
+      <button class="btn small ghost" onclick="manualRemind('${t.id}')"><i data-lucide="alarm-clock"></i>Send reminder</button>
+      <button class="btn small ghost danger" onclick="vacateUnit('${u.id}')">Vacate unit</button>`
+      :(u.status==='vacant'?`<button class="btn small" onclick="assignTenantModal('${u.id}')"><i data-lucide="plus"></i>Assign tenant</button>
+        <button class="btn small ghost" onclick="toggleReserve('${u.id}')">Mark reserved</button>`
+      :`<button class="btn small ghost" onclick="toggleReserve('${u.id}')">Release reservation</button>`)}
+    </div></div>
+    <img src="${u.photo}" alt="${esc(u.label)}" style="width:100%;height:150px;object-fit:cover;border:1px solid var(--line2);border-radius:3px">
+  </div>`);
+}
+function adminPayModal(tid){
+  const t=tenant(tid),u=unitOf(t);
+  openModal(`<div class="modal-h"><h3>Record payment — ${esc(t.name)}</h3><button class="drawer-x" onclick="closeModal()"><i data-lucide="x"></i></button></div>
+  <div class="modal-b">
+    <label>Amount (KSh)</label><input id="rp-amt" type="number" min="1" value="${t.balance||u.rent}">
+    <label>Method</label><select id="rp-m"><option>M-PESA</option><option>Bank transfer</option><option>Card</option><option>Cash</option></select>
+    <p class="small dim" style="margin-top:10px">Outstanding balance: <b class="mono">${fmtMoney(t.balance)}</b> · Next due ${fmtDate(t.dueDate)}</p>
+  </div>
+  <div class="modal-f"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" onclick="adminPaySubmit('${tid}')">Post payment</button></div>`);
+}
+function adminPaySubmit(tid){
+  const amt=+$('#rp-amt').value;
+  if(!amt||amt<=0)return toast('Enter a valid amount','err');
+  const p=recordPayment({tid,amount:amt,method:$('#rp-m').value});
+  closeModal();toast(fmtMoney(amt)+' recorded — '+p.receiptNo);
+  refreshView();openUnitDrawer(unitOf(tenant(tid)).id);
+}
+function adminMsgModal(tid){
+  const t=tenant(tid);
+  openModal(`<div class="modal-h"><h3>Message ${esc(t.name)}</h3><button class="drawer-x" onclick="closeModal()"><i data-lucide="x"></i></button></div>
+  <div class="modal-b"><label>Message</label><textarea id="am-t" placeholder="Write to the tenant — they will be notified immediately."></textarea></div>
+  <div class="modal-f"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" onclick="adminMsgSubmit('${tid}')"><i data-lucide="send"></i>Send</button></div>`);
+}
+function adminMsgSubmit(tid){
+  const txt=$('#am-t').value.trim();if(!txt)return toast('Write a message first','warn');
+  createTicket(tid,'Message from management',txt,'admin');
+  closeModal();toast('Message sent to '+tenant(tid).name);refreshView();
+}
+function manualRemind(tid){
+  const t=tenant(tid),st=tenantStatus(t);
+  const body=t.balance>0
+    ?`Management reminder: your outstanding balance of ${fmtMoney(t.balance)} is ${duePhrase(t)} (due ${fmtDate(t.dueDate)}).`
+    :`Management reminder: your account is fully paid. Next rent of ${fmtMoney(unitOf(t).rent)} falls due on ${fmtDate(t.dueDate)}.`;
+  addNote({to:tid,type:'reminder',title:'Reminder from management',body});
+  saveDB();toast('Reminder sent to '+t.name);
+}
+function vacateUnit(uidv){
+  const u=unit(uidv),t=tenantOf(u);
+  confirmModal('Vacate '+u.label+'?',`This ends ${esc(t.name)}'s tenancy. The unit becomes vacant; their records and payment history are kept in the archive.`,'Confirm vacate',`closeModal();doVacate('${uidv}')`);
+}
+function doVacate(uidv){
+  const u=unit(uidv),t=tenantOf(u);
+  t.active=false;u.status='vacant';u.tenantId=null;
+  addNote({to:t.id,type:'system',title:'Move-out recorded',body:`Your tenancy at ${u.label}, ${prop(u.propertyId).name} has been closed. Your deposit refund will be processed after inspection.`});
+  saveDB();toast(t.name+' moved out — '+u.label+' is now vacant');refreshView();
+}
+function toggleReserve(uidv){
+  const u=unit(uidv);
+  u.status=u.status==='reserved'?'vacant':'reserved';
+  if(u.status==='reserved')u.reservedFor=u.reservedFor||'Hold — pending application';
+  saveDB();toast(u.label+' marked '+(u.status==='reserved'?'reserved':'vacant'));refreshView();openUnitDrawer(uidv);
+}
+function assignTenantModal(uidv){
+  const u=unit(uidv);
+  openModal(`<div class="modal-h"><h3>Assign tenant — ${esc(u.label)}</h3><button class="drawer-x" onclick="closeModal()"><i data-lucide="x"></i></button></div>
+  <div class="modal-b">
+    <label>Full name</label><input id="at-name" placeholder="e.g. Grace Achieng">
+    <label>Email</label><input id="at-email" type="email" placeholder="tenant@example.com">
+    <label>Phone</label><input id="at-phone" placeholder="+254 7XX XXX XXX">
+    <label>Move-in date</label><input id="at-move" type="date" value="${todayISO()}">
+    <label>Monthly rent (KSh)</label><input id="at-rent" type="number" value="${u.rent}">
+    <label>Deposit (KSh)</label><input id="at-dep" type="number" value="${u.deposit}">
+    <p class="small dim" style="margin-top:10px">First rent falls due on the 5th of next month. The tenant signs in with their email and password <b>demo123</b>.</p>
+  </div>
+  <div class="modal-f"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" onclick="assignTenantSubmit('${uidv}')">Create tenancy</button></div>`);
+}
+function assignTenantSubmit(uidv){
+  const u=unit(uidv);
+  const name=$('#at-name').value.trim(),email=$('#at-email').value.trim(),phone=$('#at-phone').value.trim();
+  if(!name||!email)return toast('Name and email are required','err');
+  if(db.tenants.some(t=>t.email.toLowerCase()===email.toLowerCase()))return toast('A tenant with that email already exists','err');
+  const move=$('#at-move').value||todayISO();
+  const t={id:uid('t'),name,email,phone:phone||'—',unitId:uidv,pass:'demo123',dueDay:5,moveIn:move,
+    leaseStart:move,leaseEnd:dayISO(new Date(new Date(move).getFullYear()+1,new Date(move).getMonth(),new Date(move).getDate())),
+    balance:0,credits:0,active:true,billed:[],dueDate:dayISO(new Date(new Date().getFullYear(),new Date().getMonth()+1,5)),leaseMonths:12};
+  u.rent=+$('#at-rent').value||u.rent;u.deposit=+$('#at-dep').value||u.deposit;
+  u.status='occupied';u.tenantId=t.id;delete u.reservedFor;
+  db.tenants.push(t);
+  addNote({to:t.id,type:'system',title:'Welcome to '+prop(u.propertyId).name,body:`Your tenancy of ${u.label} begins ${fmtDate(move)}. Rent of ${fmtMoney(u.rent)} is due by the 5th of every month.`});
+  saveDB();closeModal();toast(t.name+' assigned to '+u.label);refreshView();openUnitDrawer(uidv);
+}
+
+/* =====================================================================
+   ADMIN — TENANTS
+===================================================================== */
+let tenQ='';
+function pg_admin_tenants(){
+  const q=tenQ.toLowerCase();
+  const list=db.tenants.filter(t=>!q||t.name.toLowerCase().includes(q)||t.email.toLowerCase().includes(q)||(unitOf(t)&&prop(unitOf(t).propertyId).name.toLowerCase().includes(q)));
+  $('#view').innerHTML=`<div class="view">
+    ${phead('Tenants',db.tenants.filter(t=>t.active).length+' active',`<span style="position:relative"><input id="tq" placeholder="Search name, email, property…" value="${esc(tenQ)}" oninput="tenQ=this.value;pg_admin_tenants();refreshIcons();$('#tq').focus();const v=$('#tq');v.setSelectionRange(v.value.length,v.value.length)" style="width:260px;padding-left:32px"></span>`)}
+    <div class="panel"><table class="ledger">
+      <thead><tr><th></th><th>Tenant</th><th>Unit</th><th class="num">Rent</th><th class="num">Balance</th><th>Next due</th><th>Status</th></tr></thead>
+      <tbody>${list.map(t=>{const u=unitOf(t),st=tenantStatus(t);
+        return `<tr class="click" ${u?`onclick="openUnitDrawer('${u.id}')"`:''}>
+        <td>${avatar(t.name)}</td>
+        <td><b>${esc(t.name)}</b><br><span class="small dim">${esc(t.email)}</span></td>
+        <td>${u?esc(u.label)+' · '+esc(prop(u.propertyId).name):'<span class="dim">No unit</span>'}</td>
+        <td class="num">${u?fmtMoney(u.rent):'—'}</td>
+        <td class="num" style="color:${t.balance?'var(--red)':'var(--green-d)'}">${fmtMoney(t.balance)}</td>
+        <td class="small">${u?fmtDate(t.dueDate)+'<br><span class="dim">'+duePhrase(t)+'</span>':'—'}</td>
+        <td>${stamp(st.key,st.label)}</td></tr>`}).join('')||'<tr><td colspan="7"><div class="empty">No tenants match.</div></td></tr>'}
+      </tbody></table></div></div>`;
+  refreshIcons();
+}
+
+/* =====================================================================
+   ADMIN — MAINTENANCE
+===================================================================== */
+function pg_admin_maintenance(){
+  const list=db.complaints.slice().sort((a,b)=>b.date<a.date?-1:1);
+  $('#view').innerHTML=`<div class="view">
+    ${phead('Maintenance','All reported issues across every property')}
+    <div class="panel"><table class="ledger">
+      <thead><tr><th>Issue</th><th>Tenant / unit</th><th>Category</th><th>Logged</th><th>Status</th></tr></thead>
+      <tbody>${list.map(c=>{const t=tenant(c.tenantId),u=unit(c.unitId);
+        return `<tr class="click" onclick="complaintModal('${c.id}')">
+        <td><b>${esc(c.title)}</b></td><td class="small">${t?esc(t.name):'—'}<br><span class="dim">${u?esc(u.label):''}</span></td>
+        <td class="small">${esc(c.category)}</td><td class="small dim">${ago(c.date)}</td>
+        <td>${stamp(c.status==='open'?'open':c.status==='in_progress'?'due':'ok',c.status==='open'?'Open':c.status==='in_progress'?'In progress':'Resolved')}</td></tr>`}).join('')||'<tr><td colspan="5"><div class="empty">No requests logged.</div></td></tr>'}
+      </tbody></table></div></div>`;
+}
+function complaintModal(id){
+  const c=db.complaints.find(x=>x.id===id);if(!c)return;
+  const t=tenant(c.tenantId),u=unit(c.unitId);
+  const lbl=c.status==='open'?'Open':c.status==='in_progress'?'In progress':'Resolved';
+  openModal(`<div class="modal-h"><h3>${esc(c.title)}</h3><span style="margin-left:auto;margin-right:10px">${stamp(c.status==='open'?'open':c.status==='in_progress'?'due':'ok',lbl)}</span><button class="drawer-x" onclick="closeModal()"><i data-lucide="x"></i></button></div>
+  <div class="modal-b">
+    <p class="small dim" style="margin-bottom:6px">${t?esc(t.name)+' · ':''}${u?esc(u.label)+' · ':''}${esc(c.category)} · logged ${fmtDT(c.date)}</p>
+    <p style="margin-bottom:12px">${esc(c.desc)}</p>
+    ${c.photos.length?`<div class="ph-thumbs">${c.photos.map(s=>`<img src="${s}">`).join('')}</div>`:''}
+    <div class="divider-label">Timeline</div>
+    <ul class="timeline">${c.updates.map(u2=>`<li><div class="tl-date">${fmtDT(u2.date)}</div><div style="font-size:13px">${esc(u2.note)}</div></li>`).join('')}</ul>
+    ${c.status!=='resolved'?`
+    <label>Add note & advance</label><textarea id="cm-note" placeholder="Optional note to the tenant…"></textarea>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      ${c.status==='open'?`<button class="btn small" onclick="cmAdvance('${c.id}','in_progress')"><i data-lucide="wrench"></i>Mark in progress</button>`:''}
+      <button class="btn small" onclick="cmAdvance('${c.id}','resolved')"><i data-lucide="check"></i>Mark resolved</button>
+    </div>`:''}
+  </div>`);
+}
+function cmAdvance(id,status){
+  const note=$('#cm-note')?$('#cm-note').value.trim():'';
+  advanceComplaint(id,status,note||undefined);
+  closeModal();toast('Request updated — tenant notified');refreshView();
+}
+
+/* =====================================================================
+   ADMIN — MESSAGES
+===================================================================== */
+let msgSel=null;
+function pg_admin_messages(){
+  const list=db.messages.slice().sort((a,b)=>b.date<a.date?-1:1);
+  if(!msgSel&&list.length)msgSel=list[0].id;
+  const sel=db.messages.find(m=>m.id===msgSel);
+  const t=sel?tenant(sel.tenantId):null;
+  $('#view').innerHTML=`<div class="view">
+    ${phead('Messages','Support tickets from every tenant')}
+    <div class="grid2" style="grid-template-columns:360px 1fr">
+      <div class="panel" style="max-height:70vh;overflow-y:auto">${list.length?list.map(m=>{const mt=tenant(m.tenantId);
+        return `<div class="note-it ${m.id===msgSel?'unread':''}" onclick="msgSel='${m.id}';pg_admin_messages();refreshIcons()">
+        ${avatar(mt.name)}<div style="min-width:0"><b>${esc(m.subject)}</b><p>${esc(mt.name)} · ${esc(m.thread[m.thread.length-1].text.slice(0,46))}…</p></div>
+        <span class="nt">${stamp(m.status==='open'?'open':'answered',m.status==='open'?'Open':'Answered')}</span></div>`}).join(''):'<div class="empty">No tickets yet.</div>'}</div>
+      <div class="panel" style="display:flex;flex-direction:column;min-height:70vh">
+        ${sel?`<div class="panel-h"><span>${esc(sel.subject)} — ${esc(t.name)}</span><span>${stamp(sel.status==='open'?'open':'answered',sel.status==='open'?'Awaiting reply':'Answered')}</span></div>
+        <div style="flex:1;overflow-y:auto;padding:18px">
+          ${sel.thread.map(m2=>`<div class="msg ${m2.by}"><div class="mt">${m2.by==='admin'?'Management':esc(t.name)} · ${fmtDT(m2.date)}</div>${esc(m2.text)}</div>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;padding:14px;border-top:1px solid var(--line)">
+          <input id="msg-reply" placeholder="Reply to ${esc(t.name)}…" onkeydown="if(event.key==='Enter')adminReplySubmit('${sel.id}')">
+          <button class="btn" onclick="adminReplySubmit('${sel.id}')"><i data-lucide="send"></i>Send</button>
+        </div>`:'<div class="empty" style="margin:auto">Select a conversation.</div>'}
+      </div>
+    </div></div>`;
+}
+function adminReplySubmit(id){
+  const txt=$('#msg-reply').value.trim();if(!txt)return toast('Write a reply first','warn');
+  replyTicket(id,txt,'admin');toast('Reply sent — tenant notified');refreshView();
+}
+
+/* =====================================================================
+   ADMIN — ANNOUNCEMENTS
+===================================================================== */
+function pg_admin_announcements(){
+  $('#view').innerHTML=`<div class="view">
+    ${phead('Announcements','Push notices to a whole property — every tenant is notified')}
+    <div class="grid2" style="grid-template-columns:420px 1fr">
+      <div class="panel"><div class="panel-h"><span>Compose</span></div><div class="panel-b">
+        <label>Title</label><input id="an-title" placeholder="e.g. Water shutdown on Thursday">
+        <label>Audience</label><select id="an-target"><option value="all">All properties</option>${db.properties.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
+        <label>Message</label><textarea id="an-body" placeholder="Write the notice…"></textarea>
+        <button class="btn wide" style="margin-top:14px" onclick="postAnnouncementSubmit()"><i data-lucide="megaphone"></i>Publish announcement</button>
+      </div></div>
+      <div class="panel"><div class="panel-h"><span>Past announcements</span></div>
+        ${db.announcements.length?db.announcements.map(a=>`<div style="padding:14px 16px;border-bottom:1px solid var(--line)">
+          <div style="display:flex;justify-content:space-between;gap:10px"><b>${esc(a.title)}</b><span class="small dim" style="white-space:nowrap">${ago(a.date)}</span></div>
+          <p class="small" style="color:var(--ink2);margin-top:3px">${esc(a.body)}</p>
+          <span class="small dim mono" style="letter-spacing:.08em">${a.propertyId==='all'?'All properties':esc(prop(a.propertyId).name)}</span></div>`).join(''):'<div class="empty">Nothing published yet.</div>'}
+      </div>
+    </div></div>`;
+}
+function postAnnouncementSubmit(){
+  const title=$('#an-title').value.trim(),body=$('#an-body').value.trim();
+  if(!title||!body)return toast('Title and message are required','err');
+  const n=postAnnouncement(title,body,$('#an-target').value);
+  toast('Published — '+n+' tenant'+(n===1?'':'s')+' notified');refreshView();
+}
+
+/* =====================================================================
+   ADMIN — SETTINGS
+===================================================================== */
+function pg_admin_settings(){
+  $('#view').innerHTML=`<div class="view">
+    ${phead('Settings','Reminders, data & demo controls')}
+    <div class="grid2" style="grid-template-columns:1fr 1fr">
+      <div class="panel"><div class="panel-h"><span>Rent reminders</span></div><div class="panel-b">
+        <label>Days before the due date to send the reminder</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="set-rd" type="number" min="0" max="14" value="${db.settings.reminderDays}" style="width:90px">
+          <span class="small dim">days (0–14)</span>
+        </div>
+        <p class="small dim" style="margin-top:10px">Tenants with an outstanding balance are notified automatically: once inside this window, again on the due date, and once the rent goes overdue. Payment confirmations, failures and balance changes are always sent instantly.</p>
+        <button class="btn" style="margin-top:14px" onclick="saveSettings()"><i data-lucide="check"></i>Save & re-run reminders</button>
+      </div></div>
+      <div class="panel"><div class="panel-h"><span>Data</span></div><div class="panel-b">
+        <div class="kv"><span class="k">Currency</span><span class="v">KSh — Kenyan shilling</span></div>
+        <div class="kv"><span class="k">Storage</span><span class="v mono">${(JSON.stringify(db).length/1024).toFixed(0)} KB in localStorage</span></div>
+        <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+          <button class="btn ghost" onclick="exportData()"><i data-lucide="receipt"></i>Export JSON</button>
+          <button class="btn danger" onclick="confirmModal('Reset demo data?','This wipes every record in your browser and reseeds the original demo ledger.','Reset & reseed','closeModal();resetData()')"><i data-lucide="trash-2"></i>Reset demo data</button>
+        </div>
+      </div></div>
+    </div></div>`;
+}
+function saveSettings(){
+  const v=Math.max(0,Math.min(14,Math.round(+$('#set-rd').value||0)));
+  db.settings.reminderDays=v;saveDB();runReminders();toast('Reminder window set to '+v+' days — reminders re-run');
+  refreshView();
+}
+function exportData(){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));
+  a.download='pangi-ledger.json';a.click();toast('Ledger exported');
+}
+function resetData(){localStorage.removeItem(DBKEY);db=seedDB();saveDB();runReminders();toast('Demo data reseeded');refreshView()}
+
+/* =====================================================================
+   TENANT — DASHBOARD
+===================================================================== */
+function pg_tenant_dashboard(){
+  const t=me(),u=myUnit(),st=tenantStatus(t);
+  const h=new Date().getHours(),greet=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const notes=myNotes().slice(0,5),pays=myPayments().filter(p=>p.status==='paid').slice(0,4);
+  $('#view').innerHTML=`<div class="view">
+    <div class="phead"><h1>${greet}, ${esc(t.name.split(' ')[0])}</h1><span class="sub">${u?esc(u.label)+' · '+esc(prop(u.propertyId).name):'No unit assigned'}</span></div>
+    <div class="strip">
+      <div class="cell"><div class="lbl">Current balance</div><div class="fig" style="color:${t.balance?'var(--red)':'var(--green-d)'}">${fmtMoney(t.balance)}</div></div>
+      <div class="cell"><div class="lbl">Monthly rent</div><div class="fig">${u?fmtMoney(u.rent):'—'}</div></div>
+      <div class="cell"><div class="lbl">Next due date</div><div class="fig">${u?fmtDate(t.dueDate):'—'}<br><span class="small" style="color:var(--ink2)">${u?duePhrase(t):''}</span></div></div>
+      <div class="cell"><div class="lbl">Payment status</div><div style="margin-top:8px">${stamp(st.key==='ok'?'ok':st.key,st.key==='ok'?'Paid up':st.label)}</div>
+        ${t.credits?`<span class="small dim" style="display:block;margin-top:8px">Credits available: <b class="mono">${fmtMoney(t.credits)}</b></span>`:''}</div>
+    </div>
+    <div class="grid2">
+      <div>
+        <div class="panel"><div class="panel-h"><span>This month</span><span class="small dim">${new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'})}</span></div>
+          <div class="panel-b">${monthStripHTML(t)}
+          <p class="small dim" style="margin-top:10px">Ring — today · ${t.balance>0&&t.dueDate&&t.dueDate.slice(0,7)===curPeriod()?(diffDays(todayISO(),t.dueDate)<0?'red — due date passed':'filled — your due date this month'):'Your rent falls due on the '+t.dueDay+'th'}</p></div></div>
+        <div class="panel"><div class="panel-h"><span>Recent transactions</span><button class="rowlink" onclick="nav('tenant/payments')">All payments</button></div>
+          ${pays.length?`<table class="ledger"><tbody>${pays.map(p=>`<tr>
+            <td class="small dim">${fmtDate(p.date.slice(0,10))}</td><td class="small">${periodLabel(p.period)}</td>
+            <td class="num">${fmtMoney(p.amount)}</td><td><button class="rowlink" onclick="showReceipt('${p.id}')">${esc(p.receiptNo)}</button></td></tr>`).join('')}</tbody></table>`
+          :'<div class="empty">No payments yet.</div>'}</div>
+      </div>
+      <div>
+        ${u?`<div class="panel" style="overflow:hidden"><div class="panel-h"><span>Your house</span><button class="rowlink" onclick="nav('tenant/house')">Open My House</button></div>
+          <img src="${u.photo}" style="width:100%;height:150px;object-fit:cover" alt="${esc(u.label)}">
+          <div class="panel-b" style="display:flex;justify-content:space-between;align-items:center">
+            <div><b>${esc(u.label)} — ${esc(prop(u.propertyId).name)}</b><br><span class="small dim">${esc(prop(u.propertyId).location)}</span></div>
+            ${stamp('ok','Occupied')}</div></div>`:''}
+        <div class="panel"><div class="panel-h"><span>Notifications</span><button class="rowlink" onclick="nav('tenant/notifications')">View all</button></div>
+          ${notes.length?notes.map(n=>noteItem(n,true)).join(''):'<div class="empty">Nothing yet.</div>'}</div>
+      </div>
+    </div></div>`;
+}
+
+/* =====================================================================
+   TENANT — MY HOUSE
+===================================================================== */
+function pg_tenant_house(){
+  const t=me(),u=myUnit();
+  if(!u){$('#view').innerHTML=`<div class="view">${phead('My house','—')}<div class="panel"><div class="empty">No unit is currently assigned to your account. Please contact management.</div></div></div>`;return}
+  const p=prop(u.propertyId),st=unitStatus(u);
+  const leasePct=Math.min(100,Math.max(0,(Date.now()-new Date(t.leaseStart))/(new Date(t.leaseEnd)-new Date(t.leaseStart))*100));
+  const monthsLeft=Math.max(0,Math.round((new Date(t.leaseEnd)-new Date())/2629800000));
+  $('#view').innerHTML=`<div class="view">
+    ${phead('My house',esc(u.label)+' · '+esc(p.name))}
+    <div class="panel" style="overflow:hidden"><div class="panel-h"><span>Photos — ${esc(p.name)}</span></div>
+      <img id="gal-main" class="gal-main" src="${u.photo}" alt="${esc(u.label)}">
+      <div class="gal-thumbs">${[u.photo,...p.photos].map((s,i)=>`<img src="${s}" class="${i===0?'on':''}" onclick="document.getElementById('gal-main').src=this.src;document.querySelectorAll('.gal-thumbs img').forEach(x=>x.classList.remove('on'));this.classList.add('on')" alt="photo">`).join('')}</div>
+    </div>
+    <div class="grid2">
+      <div class="panel"><div class="panel-h"><span>House details</span><span>${stamp(st.key,st.label)}</span></div><div class="panel-b">
+        <div class="kv"><span class="k">House / room</span><span class="v">${esc(u.label)}</span></div>
+        <div class="kv"><span class="k">Property</span><span class="v">${esc(p.name)}</span></div>
+        <div class="kv"><span class="k">Location</span><span class="v">${esc(p.location)}</span></div>
+        <div class="kv"><span class="k">Monthly rent</span><span class="v mono">${fmtMoney(u.rent)}</span></div>
+        <div class="kv"><span class="k">Deposit held</span><span class="v mono">${fmtMoney(u.deposit)}</span></div>
+        <div class="kv"><span class="k">Move-in date</span><span class="v">${fmtDate(t.moveIn)}</span></div>
+        <div class="kv"><span class="k">Rent due date</span><span class="v">${t.dueDay}${t.dueDay===1?'st':t.dueDay===2?'nd':t.dueDay===3?'rd':'th'} of every month</span></div>
+        <div class="kv"><span class="k">Current balance</span><span class="v mono" style="color:${t.balance?'var(--red)':'var(--green-d)'}">${fmtMoney(t.balance)}</span></div>
+        <div class="kv"><span class="k">Registered email</span><span class="v">${esc(t.email)}</span></div>
+        <div class="kv"><span class="k">Phone number</span><span class="v">${esc(t.phone)}</span></div>
+        <div class="divider-label">Lease</div>
+        <div class="kv"><span class="k">Period</span><span class="v">${fmtDate(t.leaseStart)} — ${fmtDate(t.leaseEnd)}</span></div>
+        <div class="lease-bar"><i style="width:${leasePct}%"></i></div>
+        <span class="small dim">${monthsLeft} month${monthsLeft===1?'':'s'} remaining on your lease</span>
+        <div class="divider-label">Description</div>
+        <p class="small" style="color:var(--ink2)">${esc(u.desc||'')}</p>
+      </div></div>
+      <div>
+        <div class="panel"><div class="panel-h"><span>Where you are</span><span class="small dim">Other tenants are not shown</span></div>
+          <div class="panel-b">${planHTML(p,{anon:true,me:t.id})}</div></div>
+        <div class="panel"><div class="panel-h"><span>Amenities</span></div><div class="panel-b">
+          <div class="amen">${p.amenities.map(a=>`<span><i data-lucide="check"></i>${esc(a)}</span>`).join('')}</div></div></div>
+        <div class="panel"><div class="panel-h"><span>House rules</span></div><div class="panel-b">
+          <ol class="rules">${p.rules.map(r=>`<li>${esc(r)}</li>`).join('')}</ol></div></div>
+      </div>
+    </div></div>`;
+}
+
+/* =====================================================================
+   TENANT — PAYMENTS
+===================================================================== */
+function pg_tenant_payments(){
+  const t=me(),u=myUnit();
+  const pays=myPayments().slice().sort((a,b)=>b.date<a.date?-1:1);
+  $('#view').innerHTML=`<div class="view">
+    ${phead('Payments','Your rent ledger — every shilling, on record',u?`<button class="btn small" onclick="payModal()"><i data-lucide="wallet"></i>Pay rent</button>`:'')}
+    <div class="strip">
+      <div class="cell"><div class="lbl">Outstanding balance</div><div class="fig" style="color:${t.balance?'var(--red)':'var(--green-d)'}">${fmtMoney(t.balance)}</div></div>
+      <div class="cell"><div class="lbl">Credits</div><div class="fig">${fmtMoney(t.credits)} ${t.credits&&t.balance?`<button class="rowlink small" style="display:block" onclick="applyCredits()">Apply to balance</button>`:''}</div></div>
+      <div class="cell"><div class="lbl">Next due</div><div class="fig">${u?fmtDate(t.dueDate):'—'}<br><span class="small" style="color:var(--ink2)">${u?duePhrase(t):''}</span></div></div>
+    </div>
+    <div class="panel"><div class="panel-h"><span>Payment history & receipts</span></div>
+      ${pays.length?`<table class="ledger">
+        <thead><tr><th>Date</th><th>For</th><th>Method</th><th>Reference</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead>
+        <tbody>${pays.map(p2=>`<tr>
+          <td class="small">${fmtDate(p2.date.slice(0,10))}</td><td class="small">${periodLabel(p2.period)}</td>
+          <td class="small">${esc(p2.method)}</td><td class="small mono">${esc(p2.ref)}</td>
+          <td class="num">${fmtMoney(p2.amount)}</td>
+          <td>${p2.status==='paid'?stamp('ok','Paid'):stamp('overdue','Failed')}</td>
+          <td>${p2.receiptNo?`<button class="rowlink" onclick="showReceipt('${p2.id}')">${esc(p2.receiptNo)}</button>`:'—'}</td></tr>`).join('')}</tbody></table>`
+      :'<div class="empty">No payments recorded yet.</div>'}
+    </div></div>`;
+}
+function payModal(){
+  const t=me(),u=myUnit();
+  openModal(`<div class="modal-h"><h3>Pay rent — ${esc(u.label)}</h3><button class="drawer-x" onclick="closeModal()"><i data-lucide="x"></i></button></div>
+  <div class="modal-b">
+    <p class="small dim" style="margin-bottom:4px">Outstanding: <b class="mono">${fmtMoney(t.balance)}</b> · Next rent due ${fmtDate(t.dueDate)}</p>
+    <label>Amount (KSh)</label><input id="pay-amt" type="number" min="1" value="${t.balance||u.rent}">
+    <label>Method</label><select id="pay-m"><option>M-PESA</option><option>Bank transfer</option><option>Card</option></select>
+    <div class="check-line"><input type="checkbox" id="pay-fail"><label for="pay-fail" style="margin:0;text-transform:none;letter-spacing:0;font:400 13px var(--sans)">Simulate a failed transaction (demo)</label></div>
+  </div>
+  <div class="modal-f"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" onclick="paySubmit()"><i data-lucide="wallet"></i>Pay now</button></div>`);
+}
+function paySubmit(){
+  const amt=+$('#pay-amt').value;
+  if(!amt||amt<=0)return toast('Enter a valid amount','err');
+  const p=recordPayment({tid:me().id,amount:amt,method:$('#pay-m').value,status:$('#pay-fail').checked?'failed':'paid'});
+  closeModal();
+  if(p.status==='paid'){toast('Payment received — '+p.receiptNo);showReceipt(p.id)}
+  else toast('Payment failed — no funds were deducted','err');
+  refreshView();
+}
+
+/* =====================================================================
+   TENANT — MAINTENANCE
+===================================================================== */
+function pg_tenant_maintenance(){
+  const list=myComplaints().slice().sort((a,b)=>b.date<a.date?-1:1);
+  $('#view').innerHTML=`<div class="view">
+    ${phead('Maintenance','Report a problem and track it to resolution')}
+    <div class="panel"><div class="panel-h"><span>Report a problem</span></div><div class="panel-b">
+      <div class="grid2" style="grid-template-columns:1fr 1fr;gap:0 20px">
+        <div>
+          <label>Issue title</label><input id="cm-title" placeholder="e.g. Kitchen tap leaking">
+          <label>Category</label><select id="cm-cat"><option>Plumbing</option><option>Electrical</option><option>Water</option><option>Doors & locks</option><option>Cleanliness</option><option>Other</option></select>
+        </div>
+        <div>
+          <label>Describe the problem</label><textarea id="cm-desc" placeholder="What is wrong, where exactly, and since when?"></textarea>
+          <label>Photos (up to 3)</label>
+          <input type="file" accept="image/*" multiple onchange="onPhotosPicked(this)">
+          <div class="ph-thumbs" id="ph-box"></div>
+        </div>
+      </div>
+      <button class="btn" style="margin-top:16px" onclick="complaintSubmit()"><i data-lucide="wrench"></i>Submit request</button>
+    </div></div>
+    <div class="panel"><div class="panel-h"><span>My requests</span></div>
+      ${list.length?list.map(c=>`<div class="note-it" onclick="complaintModal('${c.id}')">
+        <span class="nic"><i data-lucide="wrench"></i></span>
+        <div style="min-width:0"><b>${esc(c.title)}</b><p>${esc(c.category)} · ${c.photos.length} photo${c.photos.length===1?'':'s'} · logged ${ago(c.date)}</p></div>
+        ${stamp(c.status==='open'?'open':c.status==='in_progress'?'due':'ok',c.status==='open'?'Open':c.status==='in_progress'?'In progress':'Resolved')}</div>`).join(''):'<div class="empty">No requests yet — everything working as it should.</div>'}
+    </div></div>`;
+  renderPhotoThumbs();
+}
+async function complaintSubmit(){
+  const title=$('#cm-title').value.trim(),desc=$('#cm-desc').value.trim();
+  if(!title||!desc)return toast('Give the issue a title and a description','err');
+  createComplaint({title,category:$('#cm-cat').value,desc,photos:pendingPhotos.splice(0)});
+  toast('Request submitted — management has been notified');refreshView();
+}
+
+/* =====================================================================
+   TENANT — MESSAGES
+===================================================================== */
+let myMsgSel=null;
+function pg_tenant_messages(){
+  const list=myTickets().slice().sort((a,b)=>b.date<a.date?-1:1);
+  if(!myMsgSel||!list.some(m=>m.id===myMsgSel))myMsgSel=null;
+  const sel=db.messages.find(m=>m.id===myMsgSel);
+  $('#view').innerHTML=`<div class="view">
+    ${phead('Messages','Customer service — talk to management',`<button class="btn small" onclick="ticketModal()"><i data-lucide="plus"></i>New ticket</button>`)}
+    <div class="grid2" style="grid-template-columns:340px 1fr">
+      <div class="panel" style="max-height:68vh;overflow-y:auto">${list.length?list.map(m=>`
+        <div class="note-it ${m.id===myMsgSel?'unread':''}" onclick="myMsgSel='${m.id}';pg_tenant_messages();refreshIcons()">
+        <span class="nic"><i data-lucide="message-square"></i></span>
+        <div style="min-width:0"><b>${esc(m.subject)}</b><p>${esc(m.thread[m.thread.length-1].text.slice(0,52))}…</p></div>
+        <span class="nt">${stamp(m.status==='open'?'open':'answered',m.status==='open'?'Sent':'Replied')}</span></div>`).join(''):'<div class="empty">No conversations yet — start one.</div>'}</div>
+      <div class="panel" style="display:flex;flex-direction:column;min-height:68vh">
+        ${sel?`<div class="panel-h"><span>${esc(sel.subject)}</span><span>${stamp(sel.status==='open'?'open':'answered',sel.status==='open'?'Awaiting reply':'Answered')}</span></div>
+        <div style="flex:1;overflow-y:auto;padding:18px">
+          ${sel.thread.map(m2=>`<div class="msg ${m2.by}"><div class="mt">${m2.by==='admin'?'Management':'You'} · ${fmtDT(m2.date)}</div>${esc(m2.text)}</div>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;padding:14px;border-top:1px solid var(--line)">
+          <input id="my-reply" placeholder="Write a reply…" onkeydown="if(event.key==='Enter')myReplySubmit('${sel.id}')">
+          <button class="btn" onclick="myReplySubmit('${sel.id}')"><i data-lucide="send"></i>Send</button>
+        </div>`:'<div class="empty" style="margin:auto">Select a conversation, or open a new ticket.</div>'}
+      </div>
+    </div></div>`;
+}
+function ticketModal(){
+  openModal(`<div class="modal-h"><h3>New support ticket</h3><button class="drawer-x" onclick="closeModal()"><i data-lucide="x"></i></button></div>
+  <div class="modal-b"><label>Subject</label><input id="tk-s" placeholder="What is this about?">
+  <label>Message</label><textarea id="tk-t" placeholder="Write your message to management…"></textarea></div>
+  <div class="modal-f"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" onclick="ticketSubmit()"><i data-lucide="send"></i>Send ticket</button></div>`);
+}
+function ticketSubmit(){
+  const s=$('#tk-s').value.trim(),t=$('#tk-t').value.trim();
+  if(!s||!t)return toast('Subject and message are required','err');
+  const m=createTicket(me().id,s,t);
+  myMsgSel=m.id;closeModal();toast('Ticket sent — we will reply here');refreshView();
+}
+function myReplySubmit(id){
+  const txt=$('#my-reply').value.trim();if(!txt)return toast('Write a reply first','warn');
+  replyTicket(id,txt,'tenant');refreshView();
+}
+
+/* =====================================================================
+   TENANT — NOTIFICATIONS
+===================================================================== */
+function pg_tenant_notifications(){
+  const list=myNotes();
+  $('#view').innerHTML=`<div class="view">
+    ${phead('Notifications','Reminders, confirmations, announcements & updates',list.some(n=>!n.read)?`<button class="btn small ghost" onclick="markAllRead()"><i data-lucide="check"></i>Mark all read</button>`:'')}
+    <div class="panel">${list.length?list.map(n=>noteItem(n,false)).join(''):'<div class="empty">Nothing here yet.</div>'}</div></div>`;
+}
+
+/* =====================================================================
+   TENANT — PROFILE
+===================================================================== */
+function pg_tenant_profile(){
+  const t=me(),u=myUnit();
+  $('#view').innerHTML=`<div class="view">
+    ${phead('Profile','Your account details')}
+    <div class="grid2" style="grid-template-columns:1fr 1fr">
+      <div class="panel"><div class="panel-h"><span>Personal information</span></div><div class="panel-b">
+        <div style="display:flex;align-items:center;gap:14px;padding:6px 0 12px">${avatar(t.name)}<div><b style="font-size:16px">${esc(t.name)}</b><br><span class="small dim">Tenant since ${fmtDate(t.moveIn)}</span></div></div>
+        <label>Full name</label><input id="pf-name" value="${esc(t.name)}">
+        <label>Email (used to sign in)</label><input id="pf-email" type="email" value="${esc(t.email)}">
+        <label>Phone number</label><input id="pf-phone" value="${esc(t.phone)}">
+        <button class="btn" style="margin-top:16px" onclick="profileSave()"><i data-lucide="check"></i>Save changes</button>
+      </div></div>
+      <div class="panel"><div class="panel-h"><span>Account information</span></div><div class="panel-b">
+        <div class="kv"><span class="k">House / room</span><span class="v">${u?esc(u.label):'—'}</span></div>
+        <div class="kv"><span class="k">Property</span><span class="v">${u?esc(prop(u.propertyId).name):'—'}</span></div>
+        <div class="kv"><span class="k">Monthly rent</span><span class="v mono">${u?fmtMoney(u.rent):'—'}</span></div>
+        <div class="kv"><span class="k">Move-in date</span><span class="v">${fmtDate(t.moveIn)}</span></div>
+        <div class="kv"><span class="k">Role</span><span class="v">Tenant</span></div>
+        <div class="divider-label">Your data</div>
+        <p class="small dim">Your account is permanently linked to your unit. You can only see your own house, payments, receipts, complaints, messages and notifications — no other tenant's records are ever visible to you.</p>
+      </div></div>
+    </div></div>`;
+}
+function profileSave(){
+  const t=me();
+  const name=$('#pf-name').value.trim(),email=$('#pf-email').value.trim(),phone=$('#pf-phone').value.trim();
+  if(!name||!email)return toast('Name and email are required','err');
+  if(db.tenants.some(x=>x.id!==t.id&&x.email.toLowerCase()===email.toLowerCase()))return toast('That email is already in use','err');
+  t.name=name;t.email=email;t.phone=phone;
+  const s=session();s.name=name;setSession(s);
+  saveDB();toast('Profile updated');renderRoute();
+}
+
+/* ---------- boot ---------- */
+loadDB();
+runReminders();
+if(!location.hash)location.hash='#/login';
+renderRoute();
+</script>
+</body>
+</html>
